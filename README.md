@@ -1,4 +1,4 @@
-# Mapperatorinator
+# BeatHeritage
 
 Try the model [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb). Check out a video showcase [here](https://youtu.be/FEr7t1L2EoA).
 
