@@ -7,7 +7,7 @@ defaults:
 
 model_path: 'OliBomby/Mapperatorinator-v29.1'
 diff_ckpt: 'OliBomby/osu-diffusion-v2'
-version: 'Mapperatorinator V29.1'        # Beatmap version
+version: 'BeatHeritage V29.1'        # Beatmap version
 output_type: [TIMING, KIAI, MAP, SV]    # Output type (map, timing)
 super_timing: true     # Use super timing generator (slow but accurate timing)
 timing_leniency: 3     # Number of milliseconds of error to allow for timing generation
