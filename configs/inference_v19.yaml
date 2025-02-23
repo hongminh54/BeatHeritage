@@ -5,7 +5,7 @@ defaults:
   - diffusion: v1
   - _self_
 
-version: 'Mapperatorinator V19'        # Beatmap version
+version: 'BeatHeritage V19'        # Beatmap version
 timeshift_bias: -1.5        # Logit bias for sampling timeshift tokens
 
 # Diffusion settings
