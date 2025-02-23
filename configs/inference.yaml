@@ -54,8 +54,8 @@ bpm: 120                # Beats per minute of input audio
 offset: 0               # Start of beat, in miliseconds, from the beginning of input audio
 title: ''               # Song title
 artist: ''              # Song artist
-creator: 'Mapperatorinator'        # Beatmap creator
-version: 'Mapperatorinator'        # Beatmap version
+creator: 'BeatHeritage'        # Beatmap creator
+version: 'BeatHeritage'        # Beatmap version
 background: null          # File name of background image
 preview_time: -1        # Time in milliseconds to start previewing the song
 
