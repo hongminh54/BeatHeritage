@@ -1,220 +1,202 @@
 # BeatHeritage
 
-Try the model [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb). Check out a video showcase [here](https://youtu.be/FEr7t1L2EoA).
+Bạn có thể thử model [tại đây](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb).
 
-Mapperatorinator is multi-model framework that uses spectrogram inputs to generate fully featured osu! beatmaps for all gamemodes. The goal of this project is to automatically generate rankable quality osu! beatmaps from any song with a high degree of customizability.
+BeatHeritage là một khung đa mô hình sử dụng đầu vào từ phổ ký để tạo ra các beatmap osu! hoàn chỉnh cho tất cả các chế độ chơi. Mục tiêu của dự án này là tự động tạo ra các beatmap osu! có chất lượng đủ để xếp hạng từ bất kỳ bài hát nào với mức độ tùy chỉnh cao.
 
-This project is built upon [osuT5](https://github.com/gyataro/osuT5) and [osu-diffusion](https://github.com/OliBomby/osu-diffusion). In developing this, I spent about 2500 hours of GPU compute across 142 runs on my 4060 Ti and rented 4090 instances on vast.ai.
+Dự án này được xây dựng dựa trên [osuT5](https://github.com/gyataro/osuT5) và [osu-diffusion](https://github.com/OliBomby/osu-diffusion).
 
-#### Use this tool responsibly. Always disclose the use of AI in your beatmaps. Do not upload the generated beatmaps.
+#### Hãy sử dụng công cụ này một cách có trách nhiệm!
 
 
-## Inference
+## Hướng dẫn
 
-The instruction below allows you to generate beatmaps on your local machine, or you can run it in the cloud with the [colab notebook](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb).
+Hướng dẫn dưới đây cho phép bạn tạo beatmap trên máy tính của mình hoặc bạn có thể chạy nó trên đám mây với [Colab Notebook](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb).
 
-### 1. Clone the repository
+### 1. Sao chép kho lưu trữ
 
 ```sh
-git clone https://github.com/OliBomby/Mapperatorinator.git
-cd Mapperatorinator
+git clone https://github.com/hongminh54/BeatHeritage.git
+cd BeatHeritage
 ```
 
-### 2. (Optional) Create virtual environment
+### 2. (Tùy chọn) Tạo môi trường ảo
 
 ```sh
 python -m venv .venv
 
-# In cmd.exe
+# Trong cmd.exe
 .venv\Scripts\activate.bat
-# In PowerShell
+# Trong PowerShell
 .venv\Scripts\Activate.ps1
-# In Linux or MacOS
+# Trong Linux or MacOS
 source .venv/bin/activate
 ```
 
-### 3. Install dependencies
+### 3. Cài đặt các phụ thuộc
 
-Install Python 3.10, [Git](https://git-scm.com/downloads), [ffmpeg](http://www.ffmpeg.org/), [PyTorch](https://pytorch.org/get-started/locally/), and the remaining Python dependencies.
+Cài đặt Python 3.10, [Git](https://git-scm.com/downloads), [ffmpeg](http://www.ffmpeg.org/), [PyTorch](https://pytorch.org/get-started/locally/), và cài đặt các phụ thuộc Python còn lại.
 
 ```sh
 pip install -r requirements.txt
 ```
 
-### 4. Begin inference
+### 4. Bắt đầu quá trình suy luận
 
-Run `inference.py` and pass in some arguments to generate beatmaps. For this use [Hydra override syntax](https://hydra.cc/docs/advanced/override_grammar/basic/). See `inference.yaml` for all available parameters. 
+Chạy `inference.py` và truyền vào một số đối số để tạo beatmaps. Đối với việc này, hãy sử dụng [Hydra override syntax](https://hydra.cc/docs/advanced/override_grammar/basic/). Xem `inference.yaml` để biết tất cả các tham số có sẵn. 
 ```
 python inference.py \
-  audio_path           [Path to input audio] \
-  output_path          [Path to output directory] \
-  beatmap_path         [Path to .osu file to autofill metadata, audio_path, and output_path, or use as reference] \
+  audio_path           [Đường dẫn đến file âm thanh đầu vào] \
+  output_path          [Đường dẫn đến thư mục đầu ra] \
+  beatmap_path         [Đường dẫn đến file .osu để tự động điền metadata, audio_path và output_path, hoặc sử dụng làm tham chiếu] \
   
-  gamemode             [Game mode to generate 0=std, 1=taiko, 2=ctb, 3=mania] \
-  difficulty           [Difficulty star rating to generate] \
-  mapper_id            [Mapper user ID for style] \
-  year                 [Upload year to simulate] \
-  hitsounded           [Whether to add hitsounds] \
-  slider_multiplier    [Slider velocity multiplier] \
-  circle_size          [Circle size] \
-  keycount             [Key count for mania] \
-  hold_note_ratio      [Hold note ratio for mania 0-1] \
-  scroll_speed_ratio   [Scroll speed ratio for mania and ctb 0-1] \
-  descriptors          [List of OMDB descriptors for style] \
-  negative_descriptors [List of OMDB negative descriptors for classifier-free guidance] \
+  gamemode             [Chế độ chơi để tạo 0=std, 1=taiko, 2=ctb, 3=mania] \
+  difficulty           [Độ khó sao để tạo] \
+  mapper_id            [ID người dùng mapper cho phong cách] \
+  year                 [Năm upload để mô phỏng] \
+  hitsounded           [Có thêm hitsounds hay không] \
+  slider_multiplier    [Hệ số nhân tốc độ slider] \
+  circle_size          [Kích thước vòng tròn] \
+  keycount             [Số phím cho mania] \
+  hold_note_ratio      [Tỷ lệ nốt giữ cho mania 0-1] \
+  scroll_speed_ratio   [Tỷ lệ tốc độ cuộn cho mania và ctb 0-1] \
+  descriptors          [Danh sách các mô tả OMDB cho phong cách] \
+  negative_descriptors [Danh sách các mô tả phủ định OMDB để hướng dẫn không phân loại] \
   
-  add_to_beatmap       [Whether to add generated content to the reference beatmap instead of making a new beatmap] \
-  start_time           [Generation start time in milliseconds] \
-  end_time             [Generation end time in milliseconds] \
-  in_context           [List of additional context to provide to the model [NONE,TIMING,KIAI,MAP,GD,NO_HS]] \
-  output_type          [List of content types to generate] \
-  cfg_scale            [Scale of the classifier-free guidance] \
-  super_timing         [Whether to use slow accurate variable BPM timing generator] \
-  seed                 [Random seed for generation] \
+  add_to_beatmap       [Có thêm nội dung được tạo vào beatmap tham chiếu thay vì tạo beatmap mới] \
+  start_time           [Thời gian bắt đầu tạo tính bằng mili giây] \
+  end_time             [Thời gian kết thúc tạo tính bằng mili giây] \
+  in_context           [Danh sách các ngữ cảnh bổ sung để cung cấp cho mô hình [NONE,TIMING,KIAI,MAP,GD,NO_HS]] \
+  output_type          [Danh sách các loại nội dung để tạo] \
+  cfg_scale            [Tỷ lệ hướng dẫn không phân loại] \
+  super_timing         [Có sử dụng bộ tạo thời gian BPM biến đổi chậm chính xác không] \
+  seed                 [Hạt giống ngẫu nhiên để tạo] \
 ```
 
-Example:
+Ví dụ:
 ```
 python inference.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji Ninuma - DISCO PRINCE\Kenji Ninuma - DISCOPRINCE (peppy) [Normal].osu'" gamemode=0 difficulty=5.5 year=2023 descriptors="['jump aim','clean']" in_context=[TIMING,KIAI]
 ```
 
-### Tips
+### Mẹo
 
-- You can edit `configs/inference_v29.yaml` and add your arguments there instead of typing them in the terminal every time.
-- All available descriptors can be found [here](https://omdb.nyahh.net/descriptors/).
-- Always provide a year argument between 2007 and 2023. If you leave it unknown, the model might generate with an inconsistent style.
-- Always provide a difficulty argument. If you leave it unknown, the model might generate with an inconsistent difficulty.
-- Increase the `cfg_scale` parameter to increase the effectiveness of the `mapper_id` and `descriptors` arguments.
-- You can use the `negative_descriptors` argument to guide the model away from certain styles. This only works when `cfg_scale > 1`. Make sure the number of negative descriptors is equal to the number of descriptors.
-- If your song style and desired beatmap style don't match well, the model might not follow your directions. For example, its hard to generate a high SR, high SV beatmap for a calm song. 
-- If you already have timing and kiai times done for a song, then you can give this to the model to greatly increase inference speed and accuracy: Use the `beatmap_path` and `in_context=[TIMING,KIAI]` arguments.
-- To remap just a part of your beatmap, use the `beatmap_path`, `start_time`, `end_time`, and `add_to_beatmap=true` arguments.
-- To generate a guest difficulty for a beatmap, use the `beatmap_path` and `in_context=[GD,TIMING,KIAI]` arguments.
-- To generate hitsounds for a beatmap, use the `beatmap_path` and `in_context=[NO_HS,TIMING,KIAI]` arguments.
-- To generate only timing for a song, use the `super_timing=true` and `output_type=[TIMING]` arguments.
+### Hướng Dẫn Sử Dụng Model
 
-## Overview
+- Bạn có thể chỉnh sửa tệp `configs/inference_v29.yaml` và thêm các tham số của mình vào đó thay vì nhập chúng trong terminal mỗi lần.
+- Tất cả các mô tả (descriptors) có sẵn có thể được tìm thấy [tại đây](https://omdb.nyahh.net/descriptors/).
+- Luôn cung cấp tham số năm (year) trong khoảng từ 2007 đến 2023. Nếu để trống, model có thể tạo ra kết quả với phong cách không nhất quán.
+- Luôn cung cấp tham số độ khó (difficulty). Nếu để trống, model có thể tạo ra độ khó không nhất quán.
+- Tăng giá trị tham số `cfg_scale` để tăng hiệu quả của các tham số `mapper_id` và `descriptors`.
+- Bạn có thể sử dụng tham số `negative_descriptors` để hướng model tránh xa một số phong cách nhất định. Tham số này chỉ hoạt động khi `cfg_scale > 1`. Đảm bảo số lượng `negative_descriptors` bằng với số lượng `descriptors`.
+- Nếu phong cách bài hát và phong cách beatmap mong muốn không phù hợp, model có thể không tạo ra kết quả như ý muốn. Ví dụ, rất khó để tạo một beatmap có độ khó cao (SR cao, SV cao) cho một bài hát nhẹ nhàng.
+- Nếu bạn đã có sẵn phần timing và kiai times cho bài hát, bạn có thể cung cấp chúng cho model để tăng tốc độ và độ chính xác của quá trình suy luận bằng cách sử dụng các tham số `beatmap_path` và `in_context=[TIMING,KIAI]`.
+- Để remap một phần beatmap, hãy sử dụng các tham số `beatmap_path`, `start_time`, `end_time` và `add_to_beatmap=true`.
+- Để tạo độ khó khách mời (guest difficulty) cho một beatmap, hãy sử dụng các tham số `beatmap_path` và `in_context=[GD,TIMING,KIAI]`.
+- Để tạo hitsounds cho một beatmap, hãy sử dụng các tham số `beatmap_path` và `in_context=[NO_HS,TIMING,KIAI]`.
+- Để chỉ tạo timing cho một bài hát, hãy sử dụng `super_timing=true` và `output_type=[TIMING]`.
+
+## Tổng quan
 
 ### Tokenization
 
-Mapperatorinator converts osu! beatmaps into an intermediate event representation that can be directly converted to and from tokens.
-It includes hit objects, hitsounds, slider velocities, new combos, timing points, kiai times, and taiko/mania scroll speeds.
+BeatHeritage chuyển đổi các beatmap của osu! thành một dạng biểu diễn sự kiện trung gian, có thể được chuyển đổi trực tiếp sang và từ các token.
 
-Here is a small examle of the tokenization process:
+Nó bao gồm:  
+- Hit objects  
+- Hitsounds  
+- Slider velocities  
+- New combos  
+- Timing points  
+- Kiai times  
+- Tốc độ cuộn của Taiko/Mania  
 
-![mapperatorinator_parser](https://github.com/user-attachments/assets/84efde76-4c27-48a1-b8ce-beceddd9e695)
+Dưới đây là một ví dụ nhỏ về quá trình mã hóa token:
 
-To save on vocabulary size, time events are quantized to 10ms intervals and position coordinates are quantized to 32 pixel grid points.
+![BeatHeritage_parser](https://github.com/user-attachments/assets/84efde76-4c27-48a1-b8ce-beceddd9e695)
 
-### Model architecture
-The model is basically a wrapper around the [HF Transformers Whisper](https://huggingface.co/docs/transformers/en/model_doc/whisper#transformers.WhisperForConditionalGeneration) model, with custom input embeddings and loss function.
-Model size amounts to 219M parameters.
-This model was found to be faster and more accurate than T5 for this task.
+Để giảm kích thước từ vựng, các sự kiện thời gian được lượng tử hóa thành các khoảng 10ms, và tọa độ vị trí được lượng tử hóa thành lưới 32 pixel
 
-The high-level overview of the model's input-output is as follows:
+### Kiến trúc mô hình
 
-![Picture2](https://user-images.githubusercontent.com/28675590/201044116-1384ad72-c540-44db-a285-7319dd01caad.svg)
+Mô hình về cơ bản là một lớp bao bọc xung quanh mô hình [HF Transformers Whisper](https://huggingface.co/docs/transformers/en/model_doc/whisper#transformers.WhisperForConditionalGeneration), với embedding đầu vào và hàm mất mát tùy chỉnh.  
+Kích thước mô hình bao gồm 219 triệu tham số.  
+Mô hình này được phát hiện nhanh hơn và chính xác hơn so với T5 cho tác vụ này.  
 
-The model uses Mel spectrogram frames as encoder input, with one frame per input position. The model decoder output at each step is a softmax distribution over a discrete, predefined, vocabulary of events. Outputs are sparse, events are only needed when a hit-object occurs, instead of annotating every single audio frame.
+Tổng quan cấp cao về đầu vào - đầu ra của mô hình như sau:  
 
-### Multitask training format
+![Picture2](https://user-images.githubusercontent.com/28675590/201044116-1384ad72-c540-44db-a285-7319dd01caad.svg)  
 
-![Multitask training format](https://github.com/user-attachments/assets/62f490bc-a567-4671-a7ce-dbcc5f9cd6d9)
+Mô hình sử dụng các khung Mel spectrogram làm đầu vào cho encoder, với một khung trên mỗi vị trí đầu vào.  
+Đầu ra của decoder tại mỗi bước là một phân phối softmax trên một tập hợp từ vựng sự kiện rời rạc được xác định trước.  
+Đầu ra có tính thưa (sparse), chỉ cần có sự kiện khi một hit-object xuất hiện, thay vì chú thích từng khung âm thanh riêng lẻ.  
 
-Before the SOS token are additional tokens that facilitate conditional generation. These tokens include the gamemode, difficulty, mapper ID, year, and other metadata.
-During training, these tokens do not have accompanying labels, so they are never output by the model. 
-Also during training there is a random chance that a metadata token gets replaced by an 'unknown' token, so during inference we can use these 'unknown' tokens to reduce the amount of metadata we have to give to the model.
 
-### Seamless long generation
+### Định dạng huấn luyện đa nhiệm
 
-The context length of the model is 8.192 seconds long. This is obviously not enough to generate a full beatmap, so we have to split the song into multiple windows and generate the beatmap in small parts.
-To make sure that the generated beatmap does not have noticeable seams in between windows, we use a 90% overlap and generate the windows sequentially.
-Each generation window except the first starts with the decoder pre-filled up to 50% of the generation window with tokens from the previous windows.
-We use a logit processor to make sure that the model can't generate time tokens that are in the first 50% of the generation window.
-Additionally, the last 40% of the generation window is reserved for the next window. Any generated time tokens in that range are treated as EOS tokens.
-This ensures that each generated token is conditioned on at least 4 seconds of previous tokens and 3.3 seconds of future audio to anticipate.
+![Định dạng huấn luyện đa nhiệm](https://github.com/user-attachments/assets/62f490bc-a567-4671-a7ce-dbcc5f9cd6d9)
 
-To prevent offset drifting during long generation, random offsets have been added to time events in the decoder during training.
-This forces it to correct timing errors by listening to the onsets in the audio instead, and results in a consistently accurate offset.
+Trước token SOS có các token bổ sung giúp tạo dữ liệu có điều kiện.  
+Những token này bao gồm chế độ chơi (gamemode), độ khó (difficulty), ID mapper, năm phát hành và các metadata khác.  
 
-### Refined coordinates with diffusion
+Trong quá trình huấn luyện, các token này không có nhãn đi kèm, nên mô hình sẽ không tạo ra chúng.  
+Cũng trong quá trình huấn luyện, có một xác suất ngẫu nhiên một token metadata bị thay thế bởi token "unknown", nên khi suy luận (inference), ta có thể sử dụng "unknown" để giảm lượng metadata cần cung cấp cho mô hình.  
 
-Position coordinates generated by the decoder are quantized to 32 pixel grid points, so afterward we use diffusion to denoise the coordinates to the final positions.
-For this we trained a modified version of [osu-diffusion](https://github.com/OliBomby/osu-diffusion) that is specialized to only the last 10% of the noise schedule, and accepts the more advanced metadata tokens that Mapperatorinator uses for conditional generation.
+### Sinh chuỗi dài liền mạch
 
-Since the Mapperatorinator model outputs the SV of sliders, the required length of the slider is fixed regardless of the shape of the control point path.
-Therefore, we try to guide the diffusion process to create coordinates that fit the required slider lengths.
-We do this by recalculating the slider end positions after every step of the diffusion process based on the required length and the current control point path.
-This means that the diffusion process does not have direct control over the slider end positions, but it can still influence them by changing the control point path.
+Độ dài ngữ cảnh của mô hình là 8.192 giây, không đủ để tạo toàn bộ beatmap, nên bài hát được chia thành nhiều cửa sổ nhỏ để mô hình tạo beatmap theo từng phần.  
 
-### Post-processing
+Để đảm bảo beatmap không có đường nối lộ rõ giữa các cửa sổ, chúng tôi áp dụng chồng lấp 90% giữa các cửa sổ và sinh từng cửa sổ theo thứ tự liên tiếp.  
+Mỗi cửa sổ (trừ cửa sổ đầu tiên) đều có 50% nội dung đầu được điền trước bằng token từ cửa sổ trước đó.  
+Bộ xử lý logit đảm bảo mô hình không tạo token thời gian thuộc 50% đầu tiên của cửa sổ.  
+40% cuối của cửa sổ được dành riêng cho cửa sổ kế tiếp. Các token thời gian sinh ra trong phạm vi này được coi là EOS.  
+Nhờ đó, mỗi token được tạo ra dựa trên ít nhất 4 giây token trước và 3.3 giây âm thanh sau để dự đoán chính xác hơn.  
 
-Mapperatorinator does some extra post-processing to improve the quality of the generated beatmap:
+Để tránh trôi lệch thời gian trong quá trình sinh dài, trong quá trình huấn luyện, mô hình được thêm độ lệch ngẫu nhiên vào các sự kiện thời gian.  
+Điều này buộc mô hình phải dựa vào điểm khởi phát âm thanh thay vì dữ liệu thời gian tuyệt đối.  
+Kết quả là mô hình tự động điều chỉnh thời gian một cách chính xác và nhất quán.  
 
-- Refine position coordinates with diffusion.
-- Resnap time events to the nearest tick using the snap divisors generated by the model.
-- Snap near-perfect positional overlaps.
-- Convert mania column events to X coordinates.
-- Generate slider paths for taiko drumrolls.
-- Fix big discrepancies in required slider length and control point path length.
 
-### Super timing generator
+## Tinh chỉnh tọa độ bằng khuếch tán (diffusion)
 
-Super timing generator is an algorithm that improves the precision and accuracy of generated timing by infering timing for the whole song 20 times and averaging the results.
-This is useful for songs with variable BPM, or songs with BPM changes. The result is almost perfect with only sometimes a section that needs manual adjustment.
+Tọa độ vị trí được tạo bởi decoder được lượng tử hóa thành lưới 32 pixel, vì vậy sau đó sử dụng khuếch tán (diffusion) để khử nhiễu và tinh chỉnh chúng đến vị trí cuối cùng.  
+Để làm điều này, chúng tôi đã huấn luyện một phiên bản sửa đổi của [osu-diffusion](https://github.com/OliBomby/osu-diffusion), chuyên biệt hóa chỉ cho 10% cuối của lịch trình nhiễu và chấp nhận các token metadata nâng cao hơn mà BeatHeritage sử dụng để tạo dữ liệu có điều kiện.  
 
-## Training
+Vì mô hình BeatHeritage xuất SV (slider velocity) của slider, nên độ dài cần thiết của slider được cố định bất kể hình dạng của đường điều khiển (control point path).  
+Do đó, tôi cố gắng hướng dẫn quá trình khuếch tán để tạo ra các tọa độ phù hợp với độ dài slider yêu cầu.  
+Chúng tôi thực hiện điều này bằng cách tính toán lại vị trí kết thúc của slider sau mỗi bước của quá trình khuếch tán, dựa trên độ dài yêu cầu và đường điều khiển hiện tại.  
+Điều này có nghĩa là quá trình khuếch tán không kiểm soát trực tiếp vị trí kết thúc của slider, nhưng vẫn có thể ảnh hưởng đến nó bằng cách thay đổi đường điều khiển.  
 
-The instruction below creates a training environment on your local machine.
 
-### 1. Clone the repository
+### Xử lý hậu kỳ
 
-```sh
-git clone https://github.com/OliBomby/Mapperatorinator.git
-cd Mapperatorinator
-```
+BeatHeritage thực hiện một số bước xử lý hậu kỳ để cải thiện chất lượng của beatmap được tạo:
 
-### 2. Create dataset
+- Tinh chỉnh tọa độ vị trí bằng khuếch tán (diffusion).
+- Căn chỉnh lại sự kiện thời gian về tick gần nhất bằng cách sử dụng snap divisors do mô hình tạo ra.
+- Điều chỉnh các vị trí gần như trùng khớp hoàn hảo.
+- Chuyển đổi sự kiện cột trong chế độ mania thành tọa độ X.
+- Tạo đường slider cho taiko drumrolls.
+- Sửa các chênh lệch lớn giữa độ dài slider yêu cầu và độ dài đường điều khiển.
 
-Create your own dataset using the [Mapperator console app](https://github.com/mappingtools/Mapperator). It requires an [osu! OAuth client token](https://osu.ppy.sh/home/account/edit) to verify beatmaps and get additional metadata. Place the dataset in the `datasets` directory next to the `Mapperatorinator` directory.
+### Bộ tạo siêu thời gian (Super timing generator)
 
-```sh
-Mapperator.ConsoleApp.exe dataset2 -t "/Mapperatorinator/datasets/beatmap_descriptors.csv" -i "path/to/osz/files" -o "/datasets/cool_dataset"
-```
+Super timing generator là một thuật toán cải thiện độ chính xác của thời gian được tạo bằng cách suy luận thời gian cho toàn bộ bài hát 20 lần và tính trung bình kết quả.  
+Điều này đặc biệt hữu ích cho các bài hát có BPM thay đổi hoặc có nhiều phân đoạn BPM khác nhau.  
+Kết quả gần như hoàn hảo, chỉ đôi khi có một số đoạn cần điều chỉnh thủ công.  
 
-### 3. Create docker container
-Training in your venv is also possible, but we recommend using Docker on WSL for better performance.
-```sh
-docker compose up -d --force-recreate
-docker attach mapperatorinator_space
-```
 
-### 4. Configure parameters and begin training
-
-All configurations are located in `./configs/osut5/train.yaml`. Begin training by calling `osuT5/train.py`.
-
-```sh
-python osuT5/train.py -cn train_v29 train_dataset_path="/workspace/datasets/cool_dataset" test_dataset_path="/workspace/datasets/cool_dataset" train_dataset_end=90 test_dataset_start=90 test_dataset_end=100
-```
-
-## See also
+## Xem thêm
 - [Mapper Classifier](./classifier/README.md)
 - [RComplexion](./rcomplexion/README.md)
 
-## Credits
+## Các dự án liên quan
 
-Special thanks to:
-1. The authors of [osuT5](https://github.com/gyataro/osuT5) for their training code.
-2. Hugging Face team for their [tools](https://huggingface.co/docs/transformers/index).
-3. [Jason Won](https://github.com/jaswon) and [Richard Nagyfi](https://github.com/sedthh) for bouncing ideas.
-4. [Marvin](https://github.com/minetoblend) for donating training credits.
-5. The osu! community for the beatmaps.
+1. [osu! Beatmap Generator](https://github.com/Syps/osu_beatmap_generator) - Tác giả: Syps (Nick Sypteras)  
+2. [osumapper](https://github.com/kotritrona/osumapper) - Tác giả: kotritrona, jyvden, Yoyolick (Ryan Zmuda)  
+3. [osu-diffusion](https://github.com/OliBomby/osu-diffusion) - Tác giả: OliBomby (Olivier Schipper), NiceAesth (Andrei Baciu)  
+4. [osuT5](https://github.com/gyataro/osuT5) - Tác giả: gyataro (Xiwen Teoh)  
+5. [Beat Learning](https://github.com/sedthh/BeatLearning) - Tác giả: sedthh (Richard Nagyfi)  
+6. [osu!dreamer](https://github.com/jaswon/osu-dreamer) - Tác giả: jaswon (Jason Won)  
+ 
 
-## Related works
-
-1. [osu! Beatmap Generator](https://github.com/Syps/osu_beatmap_generator) by Syps (Nick Sypteras)
-2. [osumapper](https://github.com/kotritrona/osumapper) by kotritrona, jyvden, Yoyolick (Ryan Zmuda)
-3. [osu-diffusion](https://github.com/OliBomby/osu-diffusion) by OliBomby (Olivier Schipper), NiceAesth (Andrei Baciu)
-4. [osuT5](https://github.com/gyataro/osuT5) by gyataro (Xiwen Teoh)
-5. [Beat Learning](https://github.com/sedthh/BeatLearning) by sedthh (Richard Nagyfi)
-6. [osu!dreamer](https://github.com/jaswon/osu-dreamer) by jaswon (Jason Won)
+ ### Project dựa trên mã nguồn của OliBomby để xây dựng [Mapperatorinator](https://github.com/OliBomby/Mapperatorinator)
