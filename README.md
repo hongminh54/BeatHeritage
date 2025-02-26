@@ -1,6 +1,6 @@
 # BeatHeritage
 
-Bạn có thể thử model [tại đây](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb).
+Bạn có thể thử model [tại đây](https://colab.research.google.com/github/hongminh54/BeatHeritage/blob/main/colab/beatheritage_inference.ipynb).
 
 BeatHeritage là một khung đa mô hình sử dụng đầu vào từ phổ ký để tạo ra các beatmap osu! hoàn chỉnh cho tất cả các chế độ chơi. Mục tiêu của dự án này là tự động tạo ra các beatmap osu! có chất lượng đủ để xếp hạng từ bất kỳ bài hát nào với mức độ tùy chỉnh cao.
 
@@ -11,7 +11,7 @@ Dự án này được xây dựng dựa trên [osuT5](https://github.com/gyatar
 
 ## Hướng dẫn
 
-Hướng dẫn dưới đây cho phép bạn tạo beatmap trên máy tính của mình hoặc bạn có thể chạy nó trên đám mây với [Colab Notebook](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb).
+Hướng dẫn dưới đây cho phép bạn tạo beatmap trên máy tính của mình hoặc bạn có thể chạy nó trên đám mây với [Colab Notebook](https://colab.research.google.com/github/hongminh54/BeatHeritage/blob/main/colab/beatheritage_inference.ipynb).
 
 ### 1. Sao chép kho lưu trữ
 
