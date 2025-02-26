@@ -8,7 +8,7 @@ from osuT5.osuT5.tokenizer import Tokenizer
 
 @hydra.main(config_path="configs", config_name="inference_v29", version_base="1.1")
 def main(args: InferenceConfig):
-    model_name = "hongminh54/BeatHeritage-v1"
+    model_name = "OliBomby/Mapperatorinator-v29.1"
 
     model, tokenizer = load_model(args.model_path, args.osut5, args.device)
 
