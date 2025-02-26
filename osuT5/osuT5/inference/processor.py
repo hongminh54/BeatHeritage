@@ -10,7 +10,7 @@ import torch.nn.functional as F
 from slider import Beatmap, TimingPoint
 from tqdm import tqdm
 from transformers import LogitsProcessorList, LogitsProcessor, EncoderDecoderCache, StaticCache, \
-    ClassifierFreeGuidanceLogitsProcessor, Cache
+    ClassifierFreeGuidanceLogitsProcessor, Cache, DynamicCache
 
 from config import InferenceConfig
 from ..dataset import OsuParser
@@ -573,7 +573,6 @@ class Processor(object):
             "max_cache_len": self.model.config.max_target_positions,
             "device": self.device,
             "dtype": self.model.dtype,
-            "layer_device_map": None,
         }
         decoder_cache = StaticCache(**cache_kwargs)
         encoder_kwargs = cache_kwargs.copy()
