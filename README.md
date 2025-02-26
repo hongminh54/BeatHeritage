@@ -1,3 +1,11 @@
+![test](![image](https://github.com/user-attachments/assets/e3b445fd-f73e-4422-a838-3a048d0e3bb5)
+
+
+
+
+
+
+
 # BeatHeritage
 
 Bạn có thể thử model [tại đây](https://colab.research.google.com/github/hongminh54/BeatHeritage/blob/main/colab/beatheritage_inference.ipynb).
