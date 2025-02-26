@@ -5,7 +5,7 @@ defaults:
   - diffusion: v1
   - _self_
 
-model_path: 'hongminh54/BeatHeritage-v1'
+model_path: 'OliBomby/Mapperatorinator-v29.1'
 diff_ckpt: 'OliBomby/osu-diffusion-v2'
 version: 'BeatHeritage V1'        # Beatmap version
 output_type: [TIMING, KIAI, MAP, SV]    # Output type (map, timing)
