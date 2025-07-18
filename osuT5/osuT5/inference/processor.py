@@ -11,7 +11,7 @@ from slider import Beatmap, TimingPoint
 from tqdm import tqdm
 
 from config import InferenceConfig
-from .server import InferenceClient, model_generate
+from .server import InferenceClient, model_generate, model_forward
 from ..dataset.osu_parser import OsuParser
 from ..dataset.data_utils import (update_event_times, remove_events_of_type, get_hold_note_ratio,
                                   get_scroll_speed_ratio, get_hitsounded_status)
@@ -173,6 +173,16 @@ class Processor(object):
             return self.model.generate(model_kwargs, generate_kwargs2)
         else:
             return model_generate(self.model, self.tokenizer, model_kwargs, generate_kwargs2)
+
+    def model_forward(self, model_kwargs) -> Any:
+        generate_kwargs2 = dict(
+            cfg_scale=self.cfg_scale,
+        )
+
+        if isinstance(self.model, InferenceClient):
+            raise NotImplementedError("Logits generation is not supported in InferenceClient.")
+        else:
+            return model_forward(self.model, model_kwargs, generate_kwargs2)
 
     def generate(
             self,
@@ -478,6 +488,164 @@ class Processor(object):
             else:
                 self.add_predicted_tokens_to_context(out_context[0], predicted_tokens[i], frame_time)
 
+    def get_logits(
+            self,
+            *,
+            sequences: tuple[torch.Tensor, torch.Tensor, float],
+            generation_config: GenerationConfig,
+            beatmap_path: Optional[str] = None,
+            verbose: bool = True,
+    ):
+        # Use the template with the least in context
+        template = min(self.context_types, key=lambda ct: len(ct["in"]))
+        all_out_context = template["out"].copy()
+
+        # Only generate SV in mania mode
+        if generation_config.gamemode != 3:
+            if ContextType.SV in all_out_context:
+                all_out_context.remove(ContextType.SV)
+
+        req_special_tokens = self.get_required_extra_special_tokens(all_out_context)
+
+        song_length = sequences[2]
+        in_context_data = self.get_in_context(
+            in_context=template["in"],
+            beatmap_path=beatmap_path,
+            song_length=song_length,
+        )
+        out_context_data = self.get_out_context(
+            out_context=all_out_context,
+            generation_config=generation_config,
+            given_context=all_out_context,
+            beatmap_path=beatmap_path,
+            song_length=song_length,
+            verbose=verbose,
+        )
+
+        # Prepare special conditioning input for model kwargs
+        model_kwargs = {}
+        if self.do_style_embed:
+            if generation_config.beatmap_id is not None:
+                model_kwargs["beatmap_idx"] = torch.tensor(
+                    [self.tokenizer.beatmap_idx[generation_config.beatmap_id]], dtype=torch.long)
+            else:
+                model_kwargs["beatmap_idx"] = torch.tensor([self.tokenizer.num_classes], dtype=torch.long)
+        if self.do_difficulty_embed:
+            if generation_config.difficulty is not None:
+                model_kwargs["difficulty"] = torch.tensor([generation_config.difficulty], dtype=torch.float32)
+            else:
+                # print("WARNING: Difficulty not provided. Selecting 5.0 for difficulty.")
+                model_kwargs["difficulty"] = torch.tensor([5.0], dtype=torch.float32)
+        if self.do_mapper_embed:
+            if generation_config.mapper_id is not None:
+                model_kwargs["mapper_idx"] = torch.tensor([self.tokenizer.get_mapper_idx(generation_config.mapper_id)], dtype=torch.long)
+            else:
+                # print("WARNING: Mapper ID not provided. Selecting default mapper.")
+                model_kwargs["mapper_idx"] = torch.tensor([-1], dtype=torch.long)
+
+        # Get relevant inputs
+        frames = self.prepare_frames(sequences[0])
+        frame_times = sequences[1]
+        song_length = sequences[2]
+        cond_prompts = []
+        uncond_prompts = []
+        model_kwargses = []
+
+        for i in range(len(frames)):
+            frame_time = frame_times[i].item()
+            cond_prompt, uncond_prompt = self.get_prompts(
+                self.prepare_context_sequences(in_context_data, frame_time, False, req_special_tokens),
+                self.prepare_context_sequences(out_context_data, frame_time, True, req_special_tokens),
+            )
+            cond_prompts.append(cond_prompt)
+            uncond_prompts.append(uncond_prompt)
+
+            kwargs = model_kwargs.copy()
+            # Prepare additional model kwargs
+            if self.do_song_position_embed:
+                global_pos_start = frame_time / song_length
+                global_pos_end = (frame_time + self.miliseconds_per_sequence) / song_length
+                kwargs["song_position"] = torch.tensor([global_pos_start, global_pos_end], dtype=torch.float32).unsqueeze(0)
+            model_kwargses.append(kwargs)
+
+        prompt, uncond_prompt, max_len = self.stack_prompts(cond_prompts, uncond_prompts)
+
+        # Split prompts and uncond_prompt into batches
+        max_batch_size = max(1, self.max_batch_size // self.num_beams // (2 if self.cfg_scale > 1 else 1))
+        num_samples = prompt.size(0)
+        model_kwarg_keys = list(model_kwargses[0].keys())
+        results = []
+
+        # Process each batch
+        iterator = tqdm(list(range(0, num_samples, max_batch_size))) if verbose else range(0, num_samples, max_batch_size)
+        for i in iterator:
+            frames_batch = frames[i:i + max_batch_size]
+            prompt_batch = prompt[i:i + max_batch_size]
+            uncond_prompt_batch = uncond_prompt[i:i + max_batch_size] if uncond_prompt is not None else None
+            kwargses_batch = model_kwargses[i:i + max_batch_size]
+            model_kwargs_batch = {k: torch.cat([kwargs[k] for kwargs in kwargses_batch], dim=0) for k in model_kwarg_keys}
+
+            # Start generation
+            results.append(self.model_forward(
+                model_kwargs_batch | dict(
+                    inputs=frames_batch,
+                    decoder_input_ids=prompt_batch,
+                    decoder_attention_mask=prompt_batch.ne(self.tokenizer.pad_id),
+                    negative_prompt=uncond_prompt_batch,
+                    negative_prompt_attention_mask=uncond_prompt_batch.ne(self.tokenizer.pad_id) if uncond_prompt_batch is not None else None,
+                ),
+            ))
+
+        # Concatenate all batch results to form the final result
+        result = torch.cat(results, dim=0)
+
+        for i, context in enumerate(out_context_data):
+            context["tokens"] = torch.full((len(context["events"]),), self.tokenizer.pad_id, dtype=torch.long)
+            context["logits"] = torch.zeros((len(context["events"]), self.tokenizer.vocab_size_out), dtype=torch.float32)
+
+            for sequence_index in range(len(frames)):
+                trim_lookback = sequence_index != 0
+                trim_lookahead = sequence_index != len(sequences[0]) - 1
+
+                frame_time = frame_times[sequence_index].item()
+
+                # Get relevant tokens for current frame
+                s, e = self._get_events_time_range(
+                    context["events"], context["event_times"], frame_time, frame_time + self.miliseconds_per_sequence)
+                events, event_times = context["events"][s:e], context["event_times"][s:e]
+                tokens = self._encode(events, frame_time).squeeze(0)
+                seq_prompt = prompt[sequence_index]
+
+                window_start_t = frame_time + self.lookback_time if trim_lookback else frame_time
+                window_end_t = frame_time + self.lookahead_max_time if trim_lookahead else frame_time + self.miliseconds_per_sequence
+                s2, e2 = self._get_events_time_range(events, event_times, window_start_t, window_end_t)
+
+                # Find the tokens in predicted_tokens[i] between context sos and eos
+                if self.add_out_context_types:
+                    sos = self.tokenizer.context_sos[context["context_type"]]
+                    eos = self.tokenizer.context_eos[context["context_type"]]
+                    start = (seq_prompt == sos).nonzero(as_tuple=True)[0]
+                    start = start[0] + 1 if len(start) > 0 else 1
+                    end = (seq_prompt == eos).nonzero(as_tuple=True)[0]
+                    end = end[0] if len(end) > 0 else len(seq_prompt)
+                else:
+                    sos = self.tokenizer.sos_id
+                    eos = self.tokenizer.eos_id
+                    start = (seq_prompt == sos).nonzero(as_tuple=True)[0]
+                    start = start[0] + 1 if len(start) > 0 else 1
+                    end = (seq_prompt == eos).nonzero(as_tuple=True)[0]
+                    end = end[0] if len(end) > 0 else len(seq_prompt)
+
+                # Shift start and end because we want to get the logits for the event instead of the next event
+                logits = result[sequence_index, start - 1:end - 1]
+                assert len(logits) == len(events), f"Logits length {len(logits)} does not match events length {len(events)} for context {context['context_type']} at frame {sequence_index}."
+
+                context["tokens"][s:e][s2:e2] = tokens[s2:e2]
+                context["logits"][s:e][s2:e2] = logits[s2:e2]
+
+        return out_context_data
+
+
     def split_into_batches(self, tensor, max_batch_size, batch_size=1):
         if tensor is None:
             return [None] * batch_size
@@ -491,7 +659,8 @@ class Processor(object):
 
     def pad_prompts(self, prompts):
         max_len = max(tensor.size(1) if tensor is not None else 0 for tensor in prompts)
-        prompts = [torch.nn.functional.pad(tensor, (max_len - tensor.size(1), 0)) if tensor is not None else None for tensor in prompts]
+        paddings = [(max_len - tensor.size(1), 0) if tensor is not None else (0, 0) for tensor in prompts]
+        prompts = [torch.nn.functional.pad(tensor, paddings[i]) if tensor is not None else None for i, tensor in enumerate(prompts)]
         return prompts, max_len
 
     def stack_prompts(self, cond_prompts, uncond_prompts):
@@ -519,7 +688,7 @@ class Processor(object):
             partial: bool = False,
             parser: Optional[OsuParser] = None,
     ):
-        if context != ContextType.NONE and finished and context not in extra_in_context:
+        if context != ContextType.NONE and finished and (extra_in_context is None or context not in extra_in_context):
             beatmap_path = Path(beatmap_path)
             if not beatmap_path.is_file():
                 raise FileNotFoundError(f"Beatmap file {beatmap_path} not found.")
@@ -811,17 +980,17 @@ class Processor(object):
         result["frame_time"] = frame_time
 
         if context["add_pre_tokens"]:
-            context_pre_events = self._get_events_time_range(
+            s, e = self._get_events_time_range(
                 context["events"], context["event_times"],
                 frame_time - self.miliseconds_per_sequence, frame_time)
-            pre_tokens = self._encode(context_pre_events, frame_time)
+            pre_tokens = self._encode(context["events"][s:e], frame_time)
             if 0 <= self.max_pre_token_len < pre_tokens.shape[1]:
                 pre_tokens = pre_tokens[:, -self.max_pre_token_len:]
             result["pre_tokens"] = pre_tokens
 
-        context_events = self._get_events_time_range(
+        s, e = self._get_events_time_range(
             context["events"], context["event_times"], frame_time, frame_time + self.miliseconds_per_sequence)
-        result["tokens"] = self._encode(context_events, frame_time)
+        result["tokens"] = self._encode(context["events"][s:e], frame_time)
 
         # Prepare extra special tokens
         extra_special_events = {}
@@ -916,7 +1085,7 @@ class Processor(object):
             if event_times[i] < end_time:
                 e = i + 1
                 break
-        return events[s:e]
+        return s, e
 
     def _trim_events_before_time(self, events, event_times, time):
         for i in range(len(event_times) - 1, -1, -1):

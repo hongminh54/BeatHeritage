@@ -100,6 +100,26 @@ def model_generate(model, tokenizer, model_kwargs, generate_kwargs):
     ).cpu()
 
 
+def model_forward(model, model_kwargs, generate_kwargs):
+    # To device
+    model_kwargs = {k: v.to(model.device) if isinstance(v, torch.Tensor) else v for k, v in model_kwargs.items()}
+    model_kwargs["frames"] = model_kwargs.pop('inputs', None)  # Rename for compatibility
+    cfg_scale = generate_kwargs.pop('cfg_scale', 1.0)
+
+    # Prepare inputs for the model
+    model_kwargs = model.prepare_inputs_for_generation(**model_kwargs)
+
+    # Create the logits processors
+    logits_processor_list = LogitsProcessorList()
+    if cfg_scale > 1.0:
+        logits_processor_list.append(ClassifierFreeGuidanceLogitsProcessor(cfg_scale))
+
+    # Perform forward pass
+    logits = model.forward(**model_kwargs).logits
+    logits = logits_processor_list(model_kwargs["decoder_input_ids"], logits).cpu()
+    return logits
+
+
 class InferenceServer:
     def __init__(
             self,
