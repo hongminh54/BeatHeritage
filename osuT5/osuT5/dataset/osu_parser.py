@@ -253,7 +253,7 @@ class OsuParser:
             events: List of events to add to.
             add_snap: Whether to add a snapping event.
         """
-        time_ms = int(time.total_seconds() * 1000)
+        time_ms = int(time.total_seconds() * 1000 + 1e-5)
         events.append(Event(EventType.TIME_SHIFT, time_ms))
         event_times.append(time_ms)
 
@@ -306,7 +306,7 @@ class OsuParser:
                 int(np.clip(p[1], self.y_min / self.position_precision, self.y_max / self.position_precision)))
 
     def _add_position_event(self, pos: npt.NDArray, last_pos: npt.NDArray, time: timedelta, events: list[Event], event_times: list[int]) -> npt.NDArray:
-        time_ms = int(time.total_seconds() * 1000)
+        time_ms = int(time.total_seconds() * 1000 + 1e-5)
         if self.add_distances:
             dist = self._clip_dist(np.linalg.norm(pos - last_pos))
             events.append(Event(EventType.DISTANCE, dist))
@@ -329,7 +329,7 @@ class OsuParser:
         return pos
 
     def _add_mania_column_event(self, pos: npt.NDArray, columns: int, time: timedelta, events: list[Event], event_times: list[int]) -> None:
-        time_ms = int(time.total_seconds() * 1000)
+        time_ms = int(time.total_seconds() * 1000 + 1e-5)
         column = int(np.clip(pos[0] / 512 * columns, 0, columns - 1))
         events.append(Event(EventType.MANIA_COLUMN, column))
         event_times.append(time_ms)
@@ -353,7 +353,7 @@ class OsuParser:
             scroll_speed: Optional[float] = None,
     ) -> npt.NDArray:
         """Add a group of events to the event list."""
-        time_ms = int(time.total_seconds() * 1000) if time is not None else None
+        time_ms = int(time.total_seconds() * 1000 + 1e-5) if time is not None else None
 
         if isinstance(event, EventType):
             event = Event(event)
