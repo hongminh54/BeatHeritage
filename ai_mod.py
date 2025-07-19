@@ -48,32 +48,6 @@ def ai_mod(
         verbose=verbose,
     )
 
-    for context in result:
-        context['surprisals'] = []
-        context['suggestions'] = []
-        for event, event_time, token, logits in zip(
-                context['events'],
-                context['event_times'],
-                context['tokens'],
-                context['logits'],
-        ):
-            probs = logits.softmax(dim=-1)
-            entropy = -torch.sum(probs * torch.log2(probs + 1e-10), dim=-1).item()
-            surprisal = -torch.log2(probs[token] + 1e-10).item()
-            relative_surprisal = surprisal / entropy if entropy > 0 else 0.0
-            context['surprisals'].append(relative_surprisal)
-
-            # Get the most likely token
-            suggested_token = logits.argmax().item()
-            try:
-                suggested_event = tokenizer.decode(suggested_token)
-            except ValueError:
-                suggested_event = suggested_token
-            context['suggestions'].append(suggested_event)
-
-            if verbose:
-                print(f"Event: {event}, Time: {event_time}, Suggestion: {suggested_event}, Surprise: {relative_surprisal:.4f}")
-
     # Print for every context and every event type, the top 10 events with the highest surprisal
     # Also skip anything below 1 relative suprisal
     if verbose:
@@ -82,14 +56,14 @@ def ai_mod(
             event_types = set(e.type for e in context['events'])
             for event_type in event_types:
                 surprisal_events = [
-                    z for z in zip(range(len(context['events'])), context['events'], context['event_times'], context['suggestions'], context['surprisals']) if z[1].type == event_type and z[-1] >= 1.0
+                    z for z in zip(range(len(context['events'])), context['real_events'], context['event_times'], context['suggestions'], context['surprisals']) if z[1].type == event_type and z[-1] >= 10.0
                 ]
                 if not surprisal_events:
                     continue
                 print(f"  Event Type: {event_type.value}")
                 surprisal_events.sort(key=lambda x: x[-1], reverse=True)
                 for i, event, event_time, suggested_event, surprisal in surprisal_events[:10]:
-                    print(f"    Event: {context['events'][i-5:i+5]}, Time: {event_time}, Suggestion: {suggested_event}, Surprisal: {surprisal:.4f}")
+                    print(f"    Event: {event}, Time: {event_time}, Suggestion: {suggested_event}, Surprisal: {surprisal:.4f}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")

@@ -458,8 +458,9 @@ class Processor(object):
         )
 
         for i, context in enumerate(out_context_data):
-            context["tokens"] = torch.full((len(context["events"]),), self.tokenizer.pad_id, dtype=torch.long)
-            context["logits"] = torch.zeros((len(context["events"]), self.tokenizer.vocab_size_out), dtype=torch.float32)
+            context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
+            context['suggestions'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['real_events'] = np.empty(len(context["events"]), dtype=np.object_)
 
             for sequence_index in range(len(frames)):
                 trim_lookback = sequence_index != 0
@@ -493,8 +494,25 @@ class Processor(object):
                 logits = result[sequence_index, start + padding - 1:end + padding - 1]
                 assert len(logits) == len(events), f"Logits length {len(logits)} does not match events length {len(events)} for context {context['context_type']} at frame {sequence_index}."
 
-                context["tokens"][s:e][s2:e2] = tokens[s2:e2]
-                context["logits"][s:e][s2:e2] = logits[s2:e2]
+                # Cut the tokens and logits to the generation window
+                tokens = tokens[s2:e2]
+                logits = logits[s2:e2]
+
+                # Calculate surprisal and relative surprisal
+                probs = logits.softmax(dim=-1)
+                entropy = -torch.sum(probs * torch.log2(probs + 1e-10), dim=-1)
+                surprisal = -torch.log2(probs[torch.arange(len(tokens)), tokens] + 1e-10)
+                relative_surprisal = torch.where(entropy > 0, surprisal / entropy, torch.zeros_like(entropy))
+
+                # Get the most likely token as a suggestion for a fix
+                suggested_tokens = logits.argmax(dim=-1)
+                suggested_events = self._decode(suggested_tokens, frame_time, True)
+
+                context['surprisals'][s:e][s2:e2] = relative_surprisal
+                context['suggestions'][s:e][s2:e2] = suggested_events
+                context['real_events'][s:e][s2:e2] = self._decode(tokens, frame_time)
+
+
 
         return out_context_data
 
@@ -802,7 +820,7 @@ class Processor(object):
             extra_in_context: Optional[dict[ContextType, tuple[list[Event], list[int]] | tuple[list[Event], list[int], torch.Tensor] | list[TimingPoint]]] = None,
             song_length: float,
             verbose: bool = True
-    ):
+    ) -> list[dict[str, Any]]:
         out = []
         for i, context in enumerate(out_context):
             context_data = self.get_context(
@@ -1122,7 +1140,12 @@ class Processor(object):
             tokens[0, i] = self.tokenizer.encode(event)
         return tokens
 
-    def _decode(self, tokens: torch.Tensor, frame_time: float) -> list[Event]:
+    def _decode(
+            self,
+            tokens: torch.Tensor,
+            frame_time: float,
+            allow_non_events: bool = False,
+    ) -> list[Event]:
         """Converts a list of tokens into Event objects and converts to absolute time values.
 
         Args:
@@ -1140,6 +1163,8 @@ class Processor(object):
             try:
                 event = self.tokenizer.decode(token.item())
             except:
+                if allow_non_events:
+                    events.append(Event(EventType.CONTROL, token.item()))
                 continue
 
             if event.type == EventType.TIME_SHIFT:
