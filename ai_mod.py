@@ -41,7 +41,7 @@ def ai_mod(
     sequences = preprocessor.segment(audio)
 
     # Generate logits
-    result = processor.get_logits(
+    result = processor.ai_mod(
         sequences=sequences,
         generation_config=generation_config,
         beatmap_path=beatmap_path,

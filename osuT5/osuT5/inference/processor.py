@@ -488,7 +488,7 @@ class Processor(object):
             else:
                 self.add_predicted_tokens_to_context(out_context[0], predicted_tokens[i], frame_time)
 
-    def get_logits(
+    def ai_mod(
             self,
             *,
             sequences: tuple[torch.Tensor, torch.Tensor, float],
