@@ -460,9 +460,9 @@ class Processor(object):
         for context in out_context_data:
             context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
             context['expected_events'] = np.empty(len(context["events"]), dtype=np.object_)
-            context['expected'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['expected_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
             context['real_events'] = np.empty(len(context["events"]), dtype=np.object_)
-            context['real'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['real_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
 
             for sequence_index in range(len(frames)):
                 trim_lookback = sequence_index != 0
@@ -537,9 +537,9 @@ class Processor(object):
                     return event
 
             for i, event in enumerate(context['real_events']):
-                context['real'][i] = process_event(event)
+                context['real_events_str'][i] = process_event(event)
             for i, event in enumerate(context['expected_events']):
-                context['expected'][i] = process_event(event)
+                context['expected_events_str'][i] = process_event(event)
 
         return out_context_data
 

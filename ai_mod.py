@@ -1,15 +1,29 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import hydra
-import numpy as np
 
 from config import InferenceConfig
 from inference import prepare_args, get_args_from_beatmap, get_config, load_model
 from osuT5.osuT5.dataset.data_utils import get_groups, Group
-from osuT5.osuT5.event import EventType, Event
+from osuT5.osuT5.event import EventType, Event, ContextType
 from osuT5.osuT5.inference import Preprocessor, Processor, GenerationConfig
 from osuT5.osuT5.inference.server import InferenceClient
 from osuT5.osuT5.model import Mapperatorinator
+
+
+@dataclass
+class Suggestion:
+    context_type: ContextType
+    index: int
+    time: float
+    group: Group
+    group_str: str
+    event: Event
+    event_str: str
+    expected_event: Event
+    expected_event_str: str
+    surprisal: float
 
 
 def ai_mod(
@@ -50,70 +64,63 @@ def ai_mod(
         verbose=verbose,
     )
 
+    position_types = [EventType.DISTANCE, EventType.POS_X, EventType.POS_Y, EventType.POS]
+    anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
+
     # Print for every context and every event type, the top 10 events with the highest surprisal
     # Also skip anything below 1 relative suprisal
-    if verbose:
-        for context in result:
-            print(f"Context: {context['context_type']}")
-            event_types = sorted(list(set(e.type for e in context['events'])), key=lambda x: x.value)
+    suggestions: list[Suggestion] = []
+    for context in result:
+        groups, group_indices = get_groups(context['events'], event_times=context['event_times'], types_first=args.train.data.types_first)
+        # Group indices map each group index to a list of indices of the events in the original list
+        # We need the reverse mapping to get the groups for each event
+        event_groups: list[int] = [0] * len(context['events'])
+        for group_index, indices in enumerate(group_indices):
+            for index in indices:
+                event_groups[index] = group_index
 
-            groups, group_indices = get_groups(context['events'], event_times=context['event_times'], types_first=args.train.data.types_first)
-            # Group indices map each group index to a list of indices of the events in the original list
-            # We need the reverse mapping to get the groups for each event
-            event_groups: list[int] = [0] * len(context['events'])
-            for group_index, indices in enumerate(group_indices):
-                for index in indices:
-                    event_groups[index] = group_index
+        context_suggestions = [
+            Suggestion(context['context_type'], *z) for z in zip(
+                range(len(context['real_events'])),
+                context['event_times'],
+                [groups[event_groups[i]] for i in range(len(context['real_events']))],
+                [""] * len(context['real_events']),
+                context['real_events'],
+                context['real_events_str'],
+                context['expected_events'],
+                context['expected_events_str'],
+                context['surprisals']
+            )
+        ]
 
-            surprisal_events = [
-                z for z in zip(
-                    range(len(context['events'])),
-                    context['event_times'],
-                    context['real_events'],
-                    context['real'],
-                    context['expected_events'],
-                    context['expected'],
-                    context['surprisals']
-                )
-            ]
+        # If the group is an anchor, we want to print the anchor index in the slider
+        for s in context_suggestions:
+            if s.group.event_type in anchor_types:
+                # Count the number of anchor groups in between this group and the slider head group
+                anchor_index = 2
+                for j in range(event_groups[s.index] - 1, -1, -1):
+                    if groups[j].event_type == EventType.SLIDER_HEAD:
+                        break
+                    if groups[j].event_type in anchor_types:
+                        anchor_index += 1
+                s.group_str = f"{s.group.event_type.value} (Anchor {anchor_index})"
+            else:
+                s.group_str = s.group.event_type.value
 
-            position_types = [EventType.DISTANCE, EventType.POS_X, EventType.POS_Y, EventType.POS]
-            anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
+        suggestions.extend(context_suggestions)
 
-            for event_type in event_types:
-                # Filter suprisal events
-                filtered_events = [
-                    (i, event_time, event, real, expected_event, expected, surprisal)
-                    for i, event_time, event, real, expected_event, expected, surprisal in surprisal_events
-                    if (event.type == event_type and
-                        surprisal >= 10.0 and
-                        not (groups[event_groups[i]].event_type == EventType.SLIDER_END and event.type in position_types) and
-                        not (event.type == EventType.TIME_SHIFT and expected_event.type == EventType.TIME_SHIFT and abs(expected_event.value - event.value) <= 10))
-                ]
+    suggestions.sort(key=lambda x: x.surprisal, reverse=True)
 
-                if not filtered_events:
-                    continue
+    # Filter suprisal events
+    suggestions = [
+        s for s in suggestions
+        if (s.surprisal >= 10.0 and
+            not (s.group.event_type == EventType.SLIDER_END and s.event.type in position_types) and
+            not (s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and abs(s.expected_event.value - s.event.value) <= 10))
+    ]
 
-                print(f"  Event Type: {event_type.value}")
-                filtered_events.sort(key=lambda x: x[-1], reverse=True)
-
-                for i, event_time, event, real, expected_event, expected, surprisal in filtered_events[:10]:
-                    group_type = groups[event_groups[i]].event_type
-
-                    # If the group is an anchor, we want to print the anchor index in the slider
-                    if group_type in anchor_types:
-                        # Count the number of anchor groups in between this group and the slider head group
-                        anchor_index = 2
-                        for j in range(event_groups[i] - 1, -1, -1):
-                            if groups[j].event_type == EventType.SLIDER_HEAD:
-                                break
-                            if groups[j].event_type in anchor_types:
-                                anchor_index += 1
-                        group_type = f"{group_type.value} (Anchor {anchor_index})"
-                    else:
-                        group_type = group_type.value
-
-                    print(f"    Time: {event_time}, Event: {real}, Suggestion: {expected}, Group: {group_type}, Surprisal: {surprisal:.4f}")
+    for s in suggestions[:10]:
+        print(f"Time: {s.time}, Group: {s.group_str}, Event: {s.event_str}, Expected: {s.expected_event_str}, Surprisal: {s.surprisal:.0f}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
