@@ -512,7 +512,7 @@ class Processor(object):
 
                 context['surprisals'][s:e][s2:e2] = relative_surprisal
                 context['expected_events'][s:e][s2:e2] = suggested_events
-                context['real_events'][s:e][s2:e2] = self._decode(tokens, frame_time)
+                context['real_events'][s:e][s2:e2] = self._decode(tokens, frame_time, True)
 
             # Post-process events
             offset = self.position_precision // 2 if self.position_precision > 1 else 0
@@ -530,6 +530,9 @@ class Processor(object):
                     sampleset = ((event.value // 8) % 3)
                     additions = ((event.value // 24) % 3)
                     return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}:{','.join(hitsounds) if hitsounds else 'none'}"
+                # Convert EOS control events to string
+                elif event.type == EventType.CONTROL and event.value in [self.tokenizer.eos_id] + self.tokenizer.context_eos.values():
+                    return f"End of sequence"
                 else:
                     return event
 
