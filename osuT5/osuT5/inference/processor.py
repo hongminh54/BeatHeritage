@@ -457,10 +457,12 @@ class Processor(object):
             verbose,
         )
 
-        for i, context in enumerate(out_context_data):
+        for context in out_context_data:
             context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
-            context['suggestions'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['expected_events'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['expected'] = np.empty(len(context["events"]), dtype=np.object_)
             context['real_events'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['real'] = np.empty(len(context["events"]), dtype=np.object_)
 
             for sequence_index in range(len(frames)):
                 trim_lookback = sequence_index != 0
@@ -509,10 +511,32 @@ class Processor(object):
                 suggested_events = self._decode(suggested_tokens, frame_time, True)
 
                 context['surprisals'][s:e][s2:e2] = relative_surprisal
-                context['suggestions'][s:e][s2:e2] = suggested_events
+                context['expected_events'][s:e][s2:e2] = suggested_events
                 context['real_events'][s:e][s2:e2] = self._decode(tokens, frame_time)
 
+            # Post-process events
+            offset = self.position_precision // 2 if self.position_precision > 1 else 0
+            def process_event(event: Event) -> Any:
+                # Rescale position events
+                if event.type == EventType.POS_X or event.type == EventType.POS_Y:
+                    return f"{event.type.value[4]}:{event.value * self.position_precision}"
+                elif event.type == EventType.POS:
+                    return f"x:{((event.value % self.x_count) + self.x_min) * self.position_precision + offset} y:{((event.value // self.x_count) + self.y_min) * self.position_precision + offset}"
+                # Convert hitsound events to string
+                elif event.type == EventType.HITSOUND:
+                    hitsound_map = ["whistle", "finish", "clap"]
+                    hitsounds = [hitsound_map[i] for i in range(3) if (event.value >> i) & 1]
+                    sampleset_map = ["normal", "soft", "drum"]
+                    sampleset = ((event.value // 8) % 3)
+                    additions = ((event.value // 24) % 3)
+                    return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}:{','.join(hitsounds) if hitsounds else 'none'}"
+                else:
+                    return event
 
+            for i, event in enumerate(context['real_events']):
+                context['real'][i] = process_event(event)
+            for i, event in enumerate(context['expected_events']):
+                context['expected'][i] = process_event(event)
 
         return out_context_data
 

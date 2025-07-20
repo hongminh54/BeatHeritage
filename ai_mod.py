@@ -6,7 +6,7 @@ import numpy as np
 from config import InferenceConfig
 from inference import prepare_args, get_args_from_beatmap, get_config, load_model
 from osuT5.osuT5.dataset.data_utils import get_groups, Group
-from osuT5.osuT5.event import EventType
+from osuT5.osuT5.event import EventType, Event
 from osuT5.osuT5.inference import Preprocessor, Processor, GenerationConfig
 from osuT5.osuT5.inference.server import InferenceClient
 from osuT5.osuT5.model import Mapperatorinator
@@ -55,7 +55,7 @@ def ai_mod(
     if verbose:
         for context in result:
             print(f"Context: {context['context_type']}")
-            event_types = set(e.type for e in context['events'])
+            event_types = sorted(list(set(e.type for e in context['events'])), key=lambda x: x.value)
 
             groups, group_indices = get_groups(context['events'], event_times=context['event_times'], types_first=args.train.data.types_first)
             # Group indices map each group index to a list of indices of the events in the original list
@@ -68,9 +68,11 @@ def ai_mod(
             surprisal_events = [
                 z for z in zip(
                     range(len(context['events'])),
-                    context['real_events'],
                     context['event_times'],
-                    context['suggestions'],
+                    context['real_events'],
+                    context['real'],
+                    context['expected_events'],
+                    context['expected'],
                     context['surprisals']
                 )
             ]
@@ -81,9 +83,12 @@ def ai_mod(
             for event_type in event_types:
                 # Filter suprisal events
                 filtered_events = [
-                    (i, event, event_time, suggested_event, surprisal)
-                    for i, event, event_time, suggested_event, surprisal in surprisal_events
-                    if event.type == event_type and surprisal >= 10.0 and not (groups[event_groups[i]].event_type == EventType.SLIDER_END and event.type in position_types)
+                    (i, event_time, event, real, expected_event, expected, surprisal)
+                    for i, event_time, event, real, expected_event, expected, surprisal in surprisal_events
+                    if (event.type == event_type and
+                        surprisal >= 10.0 and
+                        not (groups[event_groups[i]].event_type == EventType.SLIDER_END and event.type in position_types) and
+                        not (event.type == EventType.TIME_SHIFT and expected_event.type == EventType.TIME_SHIFT and abs(expected_event.value - event.value) <= 10))
                 ]
 
                 if not filtered_events:
@@ -91,7 +96,8 @@ def ai_mod(
 
                 print(f"  Event Type: {event_type.value}")
                 filtered_events.sort(key=lambda x: x[-1], reverse=True)
-                for i, event, event_time, suggested_event, surprisal in filtered_events[:10]:
+
+                for i, event_time, event, real, expected_event, expected, surprisal in filtered_events[:10]:
                     group_type = groups[event_groups[i]].event_type
 
                     # If the group is an anchor, we want to print the anchor index in the slider
@@ -107,7 +113,7 @@ def ai_mod(
                     else:
                         group_type = group_type.value
 
-                    print(f"    Time: {event_time}, Event: {event}, Suggestion: {suggested_event}, Group: {group_type}, Surprisal: {surprisal:.4f}")
+                    print(f"    Time: {event_time}, Event: {real}, Suggestion: {expected}, Group: {group_type}, Surprisal: {surprisal:.4f}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
