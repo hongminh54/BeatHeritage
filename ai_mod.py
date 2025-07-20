@@ -75,12 +75,15 @@ def ai_mod(
                 )
             ]
 
+            position_types = [EventType.DISTANCE, EventType.POS_X, EventType.POS_Y, EventType.POS]
+            anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
+
             for event_type in event_types:
                 # Filter suprisal events
                 filtered_events = [
                     (i, event, event_time, suggested_event, surprisal)
                     for i, event, event_time, suggested_event, surprisal in surprisal_events
-                    if event.type == event_type and surprisal >= 10.0 and not (groups[event_groups[i]].event_type == EventType.SLIDER_END and event.type in [EventType.DISTANCE, EventType.POS_X, EventType.POS_Y, EventType.POS])
+                    if event.type == event_type and surprisal >= 10.0 and not (groups[event_groups[i]].event_type == EventType.SLIDER_END and event.type in position_types)
                 ]
 
                 if not filtered_events:
@@ -92,7 +95,6 @@ def ai_mod(
                     group_type = groups[event_groups[i]].event_type
 
                     # If the group is an anchor, we want to print the anchor index in the slider
-                    anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
                     if group_type in anchor_types:
                         # Count the number of anchor groups in between this group and the slider head group
                         anchor_index = 2
@@ -105,7 +107,7 @@ def ai_mod(
                     else:
                         group_type = group_type.value
 
-                    print(f"    Event: {event}, Time: {event_time}, Suggestion: {suggested_event}, Group: {group_type}, Surprisal: {surprisal:.4f}")
+                    print(f"    Time: {event_time}, Event: {event}, Suggestion: {suggested_event}, Group: {group_type}, Surprisal: {surprisal:.4f}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
