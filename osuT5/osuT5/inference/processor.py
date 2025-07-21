@@ -522,6 +522,18 @@ class Processor(object):
                     return f"{event.type.value[4]}:{event.value * self.position_precision}"
                 elif event.type == EventType.POS:
                     return f"x:{((event.value % self.x_count) + self.x_min) * self.position_precision + offset} y:{((event.value // self.x_count) + self.y_min) * self.position_precision + offset}"
+                # Convert distance events to string
+                elif event.type == EventType.DISTANCE:
+                    return f"{event.value}"
+                # Convert volume to string
+                elif event.type == EventType.VOLUME:
+                    return f"{event.value}%"
+                # Convert snapping events to string
+                elif event.type == EventType.SNAPPING:
+                    return f"1/{event.value}" if event.value > 0 else "none"
+                # Convert time shift events to string mm:ss:fff
+                elif event.type == EventType.TIME_SHIFT:
+                    return f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
                 # Convert hitsound events to string
                 elif event.type == EventType.HITSOUND:
                     hitsound_map = ["whistle", "finish", "clap"]
@@ -529,7 +541,7 @@ class Processor(object):
                     sampleset_map = ["normal", "soft", "drum"]
                     sampleset = ((event.value // 8) % 3)
                     additions = ((event.value // 24) % 3)
-                    return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}:{','.join(hitsounds) if hitsounds else 'none'}"
+                    return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}-{':'.join(hitsounds) if hitsounds else 'none'}"
                 # Convert EOS control events to string
                 elif event.type == EventType.CONTROL and event.value in [self.tokenizer.eos_id] + list(self.tokenizer.context_eos.values()):
                     return f"End of sequence"
