@@ -55,6 +55,7 @@ mod_explanations = {
     (EventType.SNAPPING, EventType.SNAPPING): "Expected snapping $expected_value instead of $real_value.",
     (EventType.SNAPPING, EventType.BEAT): "Hit object likely not snapped to a beat.",
     (EventType.SNAPPING, EventType.MEASURE): "Hit object likely not snapped to a beat.",
+    (EventType.SNAPPING, EventType.TIMING_POINT): "Hit object likely not snapped to a beat.",
     (EventType.TIME_SHIFT, EventType.CONTROL): "Expected end of beatmap.",
     (EventType.TIME_SHIFT, EventType.TIME_SHIFT): "Expected object at $expected_value instead of $real_value.",
     (EventType.TIME_SHIFT, EventType.DISTANCE): "Expected additional anchors.",
@@ -74,6 +75,7 @@ class Suggestion:
     group: Group
     group_str: str
     previous_group_str: str
+    next_group: Group
     event: Event
     event_str: str
     expected_event: Event
@@ -126,6 +128,7 @@ def ai_mod(
     position_types = [EventType.DISTANCE, EventType.POS_X, EventType.POS_Y, EventType.POS]
     anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
     hs_types = [EventType.HITSOUND, EventType.VOLUME]
+    timing_types = [EventType.BEAT, EventType.MEASURE, EventType.TIMING_POINT]
 
     # Print for every context and every event type, the top 10 events with the highest surprisal
     # Also skip anything below 1 relative suprisal
@@ -146,6 +149,7 @@ def ai_mod(
                 [groups[event_groups[i]] for i in range(len(context['events']))],
                 ["None"] * len(context['events']),
                 ["None"] * len(context['events']),
+                [groups[event_groups[i] + 1] if event_groups[i] + 1 < len(groups) else None for i in range(len(context['events']))],
                 context['events'],
                 context['events_str'],
                 context['expected_events'],
@@ -204,7 +208,8 @@ def ai_mod(
         s for s in suggestions
         if (s.surprisal >= 10.0 and
             not (s.group.event_type == EventType.SLIDER_END and s.event.type in position_types) and
-            not (s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and abs(s.expected_event.value - s.event.value) <= 10))
+            not (s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and abs(s.expected_event.value - s.event.value) <= 10) and
+            not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2))
     ]
 
     for s in suggestions[:20]:
