@@ -164,7 +164,7 @@ It can detect issues like:
 To use MaiMod, you need to have Mapperatorinator installed and run the `mai_mod.py` script with the path to your beatmap as the `beatmap_path` argument.
 It also accepts the same arguments as `inference.py`, so you can customize the modding process by adding additional context to the AI like the `mapper_id`.
 ```sh
-python mai_mod.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji Ninuma - DISCO PRINCE\Kenji Ninuma - DISCOPRINCE (peppy) [Normal].osu'" mapper_id=1
+python mai_mod.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji Ninuma - DISCO PRINCE\Kenji Ninuma - DISCOPRINCE (peppy) [Normal].osu'"
 ```
 This will print the modding suggestions to the console, which you can then apply to your beatmap manually.
 Suggestions are ordered by the 'surprisal' which is a measure of how unexpected the model found the issue to be, so you can prioritize the most important issues first.
