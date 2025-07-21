@@ -77,7 +77,8 @@ class Suggestion:
     group: Group
     group_str: str
     previous_group_str: str
-    next_group: Group
+    next_group: Group | None
+    next_beat_group: Group | None
     event: Event
     event_str: str
     expected_event: Event
@@ -152,6 +153,7 @@ def ai_mod(
                 ["None"] * len(context['events']),
                 ["None"] * len(context['events']),
                 [groups[event_groups[i] + 1] if event_groups[i] + 1 < len(groups) else None for i in range(len(context['events']))],
+                [None] * len(context['events']),
                 context['events'],
                 context['events_str'],
                 context['expected_events'],
@@ -190,10 +192,18 @@ def ai_mod(
             else:
                 return type_to_str(group.event_type)
 
+        def get_next_beat_group(s: Suggestion) -> Group | None:
+            # Find the next group that is a beat, measure, or timing point
+            for i in range(event_groups[s.index] + 1, len(groups)):
+                if groups[i].event_type in timing_types:
+                    return groups[i]
+            return None
+
         # If the group is an anchor, we want to print the anchor index in the slider
         for s in context_suggestions:
             group_index = event_groups[s.index]
             s.group_str = get_group_str(group_index, s)
+            s.next_beat_group = get_next_beat_group(s)
 
             # Find the previous group with positions
             for i in range(group_index - 1, -1, -1):
@@ -221,7 +231,11 @@ def ai_mod(
     suggestions_by_category = {}
 
     for s in suggestions:
-        category, explanation_template = mod_explanations.get((s.event.type, s.expected_event.type), ("Misc", "Expected $expected_type $expected_value instead of $real_type $real_value."))
+        if s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and s.group.event_type not in timing_types and s.next_beat_group and abs(s.expected_event.value - s.next_beat_group.time) <= 10:
+            # The model predicted the time of the next beat, so it expects no hit object here
+            category, explanation_template = ("Rhythm", "Unexpected hit object.")
+        else:
+            category, explanation_template = mod_explanations.get((s.event.type, s.expected_event.type), ("Misc", "Expected $expected_type $expected_value instead of $real_type $real_value."))
         explanation_template = Template(explanation_template)
         explanation = explanation_template.safe_substitute({
             'expected_value': s.expected_event_str,
