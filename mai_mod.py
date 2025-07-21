@@ -218,7 +218,7 @@ def ai_mod(
     # Filter suggestions
     suggestions = [
         s for s in suggestions
-        if (s.surprisal >= 10.0 and
+        if (s.surprisal >= 20.0 and
             not (s.group.event_type == EventType.SLIDER_END and s.event.type in position_types) and
             not (s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and abs(s.expected_event.value - s.event.value) <= 10) and
             not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2))
