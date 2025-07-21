@@ -459,9 +459,9 @@ class Processor(object):
 
         for context in out_context_data:
             context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
-            context['expected_events'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['expected_events'] = np.array(context["events"], dtype=np.object_)
             context['expected_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
-            context['real_events'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['real_events'] = np.array(context["events"], dtype=np.object_)
             context['real_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
 
             for sequence_index in range(len(frames)):
