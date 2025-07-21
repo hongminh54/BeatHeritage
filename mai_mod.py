@@ -13,7 +13,7 @@ from osuT5.osuT5.inference import Preprocessor, Processor, GenerationConfig
 from osuT5.osuT5.inference.server import InferenceClient
 from osuT5.osuT5.model import Mapperatorinator
 
-different_anchor_type = "Expected anchor type $expected_type instead of $real_type."
+different_anchor_type = "Expected $expected_type instead of $real_type."
 
 # These event types are designed for V30 tokenization
 mod_explanations = {
