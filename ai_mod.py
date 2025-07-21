@@ -125,6 +125,7 @@ def ai_mod(
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
 def main(args: InferenceConfig):
+    args.add_to_beatmap = True
     prepare_args(args)
 
     model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, False)

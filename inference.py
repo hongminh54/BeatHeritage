@@ -164,8 +164,11 @@ def get_args_from_beatmap(args: InferenceConfig, tokenizer: Tokenizer):
 
     beatmap_path = Path(args.beatmap_path)
     beatmap = Beatmap.from_path(beatmap_path)
-    print(f"Using metadata from beatmap: {beatmap.display_name}")
 
+    if beatmap.mode not in args.train.data.gamemodes and (any(c in [ContextType.MAP, ContextType.GD, ContextType.NO_HS] for c in args.in_context) or args.add_to_beatmap):
+        raise ValueError(f"Beatmap mode {beatmap.mode} is not supported by the model. Supported modes: {args.train.data.gamemodes}")
+
+    print(f"Using metadata from beatmap: {beatmap.display_name}")
     generation_config = generation_config_from_beatmap(beatmap, tokenizer)
 
     if args.gamemode is None:
