@@ -36,7 +36,7 @@ class OsuParser:
             self.dist_max = dist_range.max_value
         self.slider_version = args.data.slider_version
 
-    def parse(self, beatmap: Beatmap, speed: float = 1.0) -> tuple[list[Event], list[int]]:
+    def parse(self, beatmap: Beatmap, speed: float = 1.0, song_length: Optional[float] = None) -> tuple[list[Event], list[int]]:
         # noinspection PyUnresolvedReferences
         """Parse an .osu beatmap.
 
@@ -46,6 +46,7 @@ class OsuParser:
         Args:
             beatmap: Beatmap object parsed from an .osu file.
             speed: Speed multiplier for the beatmap.
+            song_length: Length of the song in milliseconds. If not provided, it will be calculated from the beatmap.
 
         Returns:
             events: List of Event object lists.
@@ -103,7 +104,7 @@ class OsuParser:
             result = merge_events(kiai_events, result)
 
         if self.add_timing:
-            timing_events = self.parse_timing(beatmap)
+            timing_events = self.parse_timing(beatmap, song_length=song_length)
             result = merge_events(timing_events, result)
 
         if speed != 1.0:

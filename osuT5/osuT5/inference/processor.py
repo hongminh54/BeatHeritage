@@ -782,17 +782,17 @@ class Processor(object):
                 data["events"], data["event_times"] = parser.parse_timing(beatmap, song_length=song_length)
             elif context == ContextType.MAP:
                 beatmap = Beatmap.from_path(beatmap_path)
-                data["events"], data["event_times"] = parser.parse(beatmap)
+                data["events"], data["event_times"] = parser.parse(beatmap, song_length=song_length)
                 if add_class:
                     data["class"] = self.get_class_vector(generation_config_from_beatmap(beatmap, self.tokenizer), song_length)
             elif context == ContextType.NO_HS:
                 beatmap = Beatmap.from_path(beatmap_path)
-                hs_events, hs_event_times = parser.parse(beatmap)
+                hs_events, hs_event_times = parser.parse(beatmap, song_length=song_length)
                 data["events"], data["event_times"] = remove_events_of_type(hs_events, hs_event_times,
                                                                             [EventType.HITSOUND, EventType.VOLUME])
             elif context == ContextType.GD:
                 beatmap = Beatmap.from_path(beatmap_path)
-                data["events"], data["event_times"] = parser.parse(beatmap)
+                data["events"], data["event_times"] = parser.parse(beatmap, song_length=song_length)
                 if add_class:
                     data["class"] = self.get_class_vector(generation_config_from_beatmap(beatmap, self.tokenizer), song_length)
             elif context == ContextType.KIAI:
