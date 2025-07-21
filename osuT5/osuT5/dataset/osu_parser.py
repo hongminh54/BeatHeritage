@@ -195,7 +195,8 @@ class OsuParser:
             # Generate beat and measure events until the next timing point
             next_tp = timing_points[i + 1] if i + 1 < len(timing_points) else None
             next_time = next_tp.offset.total_seconds() * 1000 - 10 if next_tp else last_time
-            time = tp.offset.total_seconds() * 1000
+            start_time = tp.offset.total_seconds() * 1000
+            time = start_time
             measure_counter = 0
             beat_delta = tp.ms_per_beat
             while time <= next_time:
@@ -217,7 +218,7 @@ class OsuParser:
                 )
 
                 measure_counter += 1
-                time += beat_delta
+                time = int(start_time + measure_counter * beat_delta)
 
         if speed != 1.0:
             events, event_times = speed_events((events, event_times), speed)
