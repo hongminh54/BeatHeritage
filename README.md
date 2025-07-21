@@ -2,7 +2,8 @@
 
 Try the model [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb). Check out a video showcase [here](https://youtu.be/FEr7t1L2EoA).
 
-Mapperatorinator is multi-model framework that uses spectrogram inputs to generate fully featured osu! beatmaps for all gamemodes. The goal of this project is to automatically generate rankable quality osu! beatmaps from any song with a high degree of customizability.
+Mapperatorinator is multi-model framework that uses spectrogram inputs to generate fully featured osu! beatmaps for all gamemodes and [assist modding beatmaps](#maimod-the-ai-driven-modding-tool).
+The goal of this project is to automatically generate rankable quality osu! beatmaps from any song with a high degree of customizability.
 
 This project is built upon [osuT5](https://github.com/gyataro/osuT5) and [osu-diffusion](https://github.com/OliBomby/osu-diffusion). In developing this, I spent about 2500 hours of GPU compute across 142 runs on my 4060 Ti and rented 4090 instances on vast.ai.
 
@@ -149,6 +150,26 @@ You can then confirm to execute it directly or cancel and copy the command for m
 - To generate a guest difficulty for a beatmap, use the `beatmap_path` and `in_context=[GD,TIMING,KIAI]` arguments.
 - To generate hitsounds for a beatmap, use the `beatmap_path` and `in_context=[NO_HS,TIMING,KIAI]` arguments.
 - To generate only timing for a song, use the `super_timing=true` and `output_type=[TIMING]` arguments.
+
+## MaiMod: The AI-driven Modding Tool
+
+MaiMod is a modding tool for osu! beatmaps that uses Mapperatorinator predictions to find potential faults and inconsistencies which can't be detected by other automatic modding tools like [Mapset Verifier](https://github.com/Naxesss/MapsetVerifier).
+It can detect issues like:
+- Incorrect snapping or rhythmic patterns
+- Inaccurate timing points
+- Inconsistent hit object positions or new combo placements
+- Weird slider shapes
+- Inconsistent hitsounds or volumes
+
+To use MaiMod, you need to have Mapperatorinator installed and run the `mai_mod.py` script with the path to your beatmap as the `beatmap_path` argument.
+It also accepts the same arguments as `inference.py`, so you can customize the modding process by adding additional context to the AI like the `mapper_id`.
+```sh
+python mai_mod.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji Ninuma - DISCO PRINCE\Kenji Ninuma - DISCOPRINCE (peppy) [Normal].osu'" mapper_id=1
+```
+This will print the modding suggestions to the console, which you can then apply to your beatmap manually.
+Suggestions are ordered by the 'surprisal' which is a measure of how unexpected the model found the issue to be, so you can prioritize the most important issues first.
+
+MaiMod Web UI coming soon.
 
 ## Overview
 
