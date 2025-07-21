@@ -17,53 +17,54 @@ different_anchor_type = "Expected anchor type $expected_type instead of $real_ty
 # These event types are designed for V30 tokenization
 mod_explanations = {
     # Real, Expected
-    (EventType.DISTANCE, EventType.DISTANCE): "Expected distance $expected_value to the previous $previous_group instead of $real_value.",
-    (EventType.POS_X, EventType.POS_X): "Expected position $expected_value instead of $real_value.",
-    (EventType.POS_Y, EventType.POS_Y): "Expected position $expected_value instead of $real_value.",
-    (EventType.POS, EventType.POS): "Expected position $expected_value instead of $real_value.",
-    (EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR): different_anchor_type,
-    (EventType.BEZIER_ANCHOR, EventType.RED_ANCHOR): different_anchor_type,
-    (EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR): different_anchor_type,
-    (EventType.BEZIER_ANCHOR, EventType.LAST_ANCHOR): different_anchor_type,
-    (EventType.PERFECT_ANCHOR, EventType.BEZIER_ANCHOR): different_anchor_type,
-    (EventType.PERFECT_ANCHOR, EventType.RED_ANCHOR): different_anchor_type,
-    (EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR): different_anchor_type,
-    (EventType.PERFECT_ANCHOR, EventType.LAST_ANCHOR): different_anchor_type,
-    (EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR): different_anchor_type,
-    (EventType.RED_ANCHOR, EventType.PERFECT_ANCHOR): different_anchor_type,
-    (EventType.RED_ANCHOR, EventType.CATMULL_ANCHOR): different_anchor_type,
-    (EventType.RED_ANCHOR, EventType.LAST_ANCHOR): different_anchor_type,
-    (EventType.CATMULL_ANCHOR, EventType.BEZIER_ANCHOR): different_anchor_type,
-    (EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR): different_anchor_type,
-    (EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR): different_anchor_type,
-    (EventType.CATMULL_ANCHOR, EventType.LAST_ANCHOR): different_anchor_type,
-    (EventType.LAST_ANCHOR, EventType.BEZIER_ANCHOR): different_anchor_type,
-    (EventType.LAST_ANCHOR, EventType.PERFECT_ANCHOR): different_anchor_type,
-    (EventType.LAST_ANCHOR, EventType.RED_ANCHOR): different_anchor_type,
-    (EventType.LAST_ANCHOR, EventType.CATMULL_ANCHOR): different_anchor_type,
-    (EventType.HITSOUND, EventType.HITSOUND): "Expected hitsound $expected_value instead of $real_value.",
-    (EventType.VOLUME, EventType.VOLUME): "Expected volume $expected_value instead of $real_value.",
-    (EventType.HITSOUND, EventType.NEW_COMBO): "Expected new combo.",
-    (EventType.NEW_COMBO, EventType.HITSOUND): "Unexpected new combo.",
-    (EventType.HITSOUND, EventType.LAST_ANCHOR): "Expected end of slider repeats.",
-    (EventType.CIRCLE, EventType.SLIDER_HEAD): "Expected a slider instead of a circle.",
-    (EventType.CIRCLE, EventType.SPINNER): "Expected a spinner instead of a circle.",
-    (EventType.SLIDER_HEAD, EventType.CIRCLE): "Expected a circle instead of a slider.",
-    (EventType.SLIDER_HEAD, EventType.SPINNER): "Expected a spinner instead of a slider.",
-    (EventType.SPINNER, EventType.CIRCLE): "Expected a circle instead of a spinner.",
-    (EventType.SPINNER, EventType.SLIDER_HEAD): "Expected a slider instead of a spinner.",
-    (EventType.SNAPPING, EventType.SNAPPING): "Expected snapping $expected_value instead of $real_value.",
-    (EventType.SNAPPING, EventType.BEAT): "Hit object likely not snapped to a beat.",
-    (EventType.SNAPPING, EventType.MEASURE): "Hit object likely not snapped to a beat.",
-    (EventType.SNAPPING, EventType.TIMING_POINT): "Hit object likely not snapped to a beat.",
-    (EventType.TIME_SHIFT, EventType.CONTROL): "Expected end of beatmap.",
-    (EventType.TIME_SHIFT, EventType.TIME_SHIFT): "Expected object at $expected_value instead of $real_value.",
-    (EventType.TIME_SHIFT, EventType.DISTANCE): "Expected additional anchors.",
-    (EventType.MEASURE, EventType.SNAPPING): "Unexpected new measure.",
-    (EventType.MEASURE, EventType.BEAT): "Unexpected new measure.",
-    (EventType.TIMING_POINT, EventType.SNAPPING): "Unexpected new timing point.",
-    (EventType.TIMING_POINT, EventType.BEAT): "Unexpected new timing point.",
-    (EventType.TIMING_POINT, EventType.MEASURE): "Unexpected new timing point.",
+    (EventType.DISTANCE, EventType.DISTANCE): ("Compose", "Expected distance $expected_value to the previous $previous_group instead of $real_value."),
+    (EventType.POS_X, EventType.POS_X): ("Compose", "Expected position $expected_value instead of $real_value."),
+    (EventType.POS_Y, EventType.POS_Y): ("Compose", "Expected position $expected_value instead of $real_value."),
+    (EventType.POS, EventType.POS): ("Compose", "Expected position $expected_value instead of $real_value."),
+    (EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.BEZIER_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.BEZIER_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.PERFECT_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.PERFECT_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.PERFECT_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.RED_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.RED_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.RED_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.CATMULL_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.CATMULL_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.LAST_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.LAST_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.LAST_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.LAST_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.HITSOUND, EventType.HITSOUND): ("Hit Sounds", "Expected hitsound $expected_value instead of $real_value."),
+    (EventType.VOLUME, EventType.VOLUME): ("Hit Sounds", "Expected volume $expected_value instead of $real_value."),
+    (EventType.HITSOUND, EventType.NEW_COMBO): ("New Combos", "Expected new combo."),
+    (EventType.NEW_COMBO, EventType.HITSOUND): ("New Combos", "Unexpected new combo."),
+    (EventType.HITSOUND, EventType.LAST_ANCHOR): ("Rhythm", "Expected end of slider repeats."),
+    (EventType.CIRCLE, EventType.SLIDER_HEAD): ("Rhythm", "Expected a slider instead of a circle."),
+    (EventType.CIRCLE, EventType.SPINNER): ("Rhythm", "Expected a spinner instead of a circle."),
+    (EventType.SLIDER_HEAD, EventType.CIRCLE): ("Rhythm", "Expected a circle instead of a slider."),
+    (EventType.SLIDER_HEAD, EventType.SPINNER): ("Rhythm", "Expected a spinner instead of a slider."),
+    (EventType.SPINNER, EventType.CIRCLE): ("Rhythm", "Expected a circle instead of a spinner."),
+    (EventType.SPINNER, EventType.SLIDER_HEAD): ("Rhythm", "Expected a slider instead of a spinner."),
+    (EventType.SNAPPING, EventType.SNAPPING): ("Timing", "Expected snapping $expected_value instead of $real_value."),
+    (EventType.SNAPPING, EventType.BEAT): ("Timing", "Hit object likely not snapped to a beat."),
+    (EventType.SNAPPING, EventType.MEASURE): ("Timing", "Hit object likely not snapped to a beat."),
+    (EventType.SNAPPING, EventType.TIMING_POINT): ("Timing", "Hit object likely not snapped to a beat."),
+    (EventType.TIME_SHIFT, EventType.CONTROL): ("Timing", "Expected end of beatmap."),
+    (EventType.TIME_SHIFT, EventType.TIME_SHIFT): ("Timing", "Expected object at $expected_value instead of $real_value."),
+    (EventType.TIME_SHIFT, EventType.DISTANCE): ("Slider", "Expected additional anchors."),
+    (EventType.DISTANCE, EventType.TIME_SHIFT): ("Slider", "Expected last anchor."),
+    (EventType.MEASURE, EventType.SNAPPING): ("Timing", "Unexpected new measure."),
+    (EventType.MEASURE, EventType.BEAT): ("Timing", "Unexpected new measure."),
+    (EventType.TIMING_POINT, EventType.SNAPPING): ("Timing", "Unexpected new timing point."),
+    (EventType.TIMING_POINT, EventType.BEAT): ("Timing", "Unexpected new timing point."),
+    (EventType.TIMING_POINT, EventType.MEASURE): ("Timing", "Unexpected new timing point."),
 }
 
 
@@ -212,8 +213,10 @@ def ai_mod(
             not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2))
     ]
 
-    for s in suggestions[:20]:
-        explanation_template = mod_explanations.get((s.event.type, s.expected_event.type), "Expected $expected_type $expected_value instead of $real_type $real_value.")
+    suggestions_by_category = {}
+
+    for s in suggestions:
+        category, explanation_template = mod_explanations.get((s.event.type, s.expected_event.type), ("Misc", "Expected $expected_type $expected_value instead of $real_type $real_value."))
         explanation_template = Template(explanation_template)
         explanation = explanation_template.safe_substitute({
             'expected_value': s.expected_event_str,
@@ -223,7 +226,18 @@ def ai_mod(
             'group': s.group_str,
             'previous_group': s.previous_group_str,
         })
-        print(f"Time: {s.time}, Surprisal: {s.surprisal:.0f}, Group: {s.group_str}: {explanation}")
+
+        if category not in suggestions_by_category:
+            suggestions_by_category[category] = []
+        suggestions_by_category[category].append(f"Time: {s.time}, Surprisal: {s.surprisal:.0f}, Group: {s.group_str}: {explanation}")
+
+    # Print the suggestions by category
+    categories = sorted(suggestions_by_category.keys())
+    print(f"Found {len(suggestions)} suggestions:")
+    for category in categories:
+        print(f"\n{category}:")
+        for item in suggestions_by_category[category]:
+            print(f"  - {item}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
