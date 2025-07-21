@@ -61,8 +61,12 @@ mod_explanations = {
     (EventType.TIME_SHIFT, EventType.TIME_SHIFT): ("Timing", "Expected object at $expected_value instead of $real_value."),
     (EventType.TIME_SHIFT, EventType.DISTANCE): ("Slider", "Expected additional anchors."),
     (EventType.DISTANCE, EventType.TIME_SHIFT): ("Slider", "Expected last anchor."),
+    (EventType.BEAT, EventType.SNAPPING): ("Timing", "Unexpected beat."),
+    (EventType.BEAT, EventType.MEASURE): ("Timing", "Expected new measure."),
+    (EventType.BEAT, EventType.TIMING_POINT): ("Timing", "Expected new timing point."),
     (EventType.MEASURE, EventType.SNAPPING): ("Timing", "Unexpected new measure."),
     (EventType.MEASURE, EventType.BEAT): ("Timing", "Unexpected new measure."),
+    (EventType.MEASURE, EventType.TIMING_POINT): ("Timing", "Expected new timing point."),
     (EventType.TIMING_POINT, EventType.SNAPPING): ("Timing", "Unexpected new timing point."),
     (EventType.TIMING_POINT, EventType.BEAT): ("Timing", "Unexpected new timing point."),
     (EventType.TIMING_POINT, EventType.MEASURE): ("Timing", "Unexpected new timing point."),
@@ -221,7 +225,8 @@ def ai_mod(
         if (s.surprisal >= 20.0 and
             not (s.group.event_type == EventType.SLIDER_END and s.event.type in position_types) and
             not (s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and abs(s.expected_event.value - s.event.value) <= 10) and
-            not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2))
+            not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2) and
+            not (s.event.type in timing_types and s.expected_event.type == EventType.SNAPPING and s.next_group and abs(s.time - s.next_group.time) < 2))
     ]
 
     def timestamp_text(t: float) -> str:
