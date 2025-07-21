@@ -182,10 +182,11 @@ class OsuParser:
         if song_length is None and isinstance(beatmap, Beatmap):
             last_ho = beatmap.hit_objects(stacking=False)[-1]
             last_time = last_ho.end_time if hasattr(last_ho, "end_time") else last_ho.time
+            last_time = last_time.total_seconds() * 1000
         elif song_length is not None:
-            last_time = timedelta(milliseconds=song_length)
+            last_time = song_length
         else:
-            last_time = timing[-1].offset + timedelta(minutes=10)
+            last_time = timing[-1].offset.total_seconds() * 1000 + 10
 
         # Get all timing points with BPM changes
         timing_points = [tp for tp in timing if tp.bpm]
@@ -193,10 +194,10 @@ class OsuParser:
         for i, tp in enumerate(timing_points):
             # Generate beat and measure events until the next timing point
             next_tp = timing_points[i + 1] if i + 1 < len(timing_points) else None
-            next_time = next_tp.offset - timedelta(milliseconds=10) if next_tp else last_time
-            time = tp.offset
+            next_time = next_tp.offset.total_seconds() * 1000 - 10 if next_tp else last_time
+            time = tp.offset.total_seconds() * 1000
             measure_counter = 0
-            beat_delta = timedelta(milliseconds=tp.ms_per_beat)
+            beat_delta = tp.ms_per_beat
             while time <= next_time:
                 if self.add_timing_points and measure_counter == 0:
                     event_type = EventType.TIMING_POINT
@@ -207,7 +208,7 @@ class OsuParser:
 
                 self._add_group(
                     event_type,
-                    time,
+                    timedelta(milliseconds=time),
                     events,
                     event_times,
                     beatmap,
