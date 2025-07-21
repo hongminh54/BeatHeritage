@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from pathlib import Path
 from string import Template
+from rich.console import Console
 
 import hydra
 
@@ -213,6 +214,10 @@ def ai_mod(
             not (s.event.type == EventType.SNAPPING and s.expected_event.type in timing_types and s.next_group and abs(s.time - s.next_group.time) < 2))
     ]
 
+    def timestamp_text(t: float) -> str:
+        timestamp = f"{t // 60000:02}:{(t // 1000) % 60:02}:{t % 1000:03}"
+        return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
+
     suggestions_by_category = {}
 
     for s in suggestions:
@@ -229,15 +234,16 @@ def ai_mod(
 
         if category not in suggestions_by_category:
             suggestions_by_category[category] = []
-        suggestions_by_category[category].append(f"Time: {s.time}, Surprisal: {s.surprisal:.0f}, Group: {s.group_str}: {explanation}")
+        suggestions_by_category[category].append(f"{timestamp_text(s.time)} - Surprisal: {s.surprisal:.0f}, Group: {s.group_str}: {explanation}")
 
     # Print the suggestions by category
+    console = Console(width=900)
     categories = sorted(suggestions_by_category.keys())
     print(f"Found {len(suggestions)} suggestions:")
     for category in categories:
         print(f"\n{category}:")
         for item in suggestions_by_category[category][:10]:
-            print(f"  - {item}")
+            console.print(f"    {item}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")

@@ -531,7 +531,8 @@ class Processor(object):
                     return f"1/{event.value}" if event.value > 0 else "none"
                 # Convert time shift events to string mm:ss:fff
                 elif event.type == EventType.TIME_SHIFT:
-                    return f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
+                    timestamp = f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
+                    return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
                 # Convert hitsound events to string
                 elif event.type == EventType.HITSOUND:
                     hitsound_map = ["whistle", "finish", "clap"]
