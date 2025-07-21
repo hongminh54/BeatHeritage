@@ -180,7 +180,7 @@ class OsuParser:
 
         events = []
         event_times = []
-        if song_length is None and isinstance(beatmap, Beatmap):
+        if isinstance(beatmap, Beatmap) and len(beatmap.hit_objects(stacking=False)) > 0:
             last_ho = beatmap.hit_objects(stacking=False)[-1]
             last_time = last_ho.end_time if hasattr(last_ho, "end_time") else last_ho.time
             last_time = last_time.total_seconds() * 1000 + 1  # Add a small buffer to the last time
