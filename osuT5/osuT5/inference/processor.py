@@ -461,8 +461,7 @@ class Processor(object):
             context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
             context['expected_events'] = np.array(context["events"], dtype=np.object_)
             context['expected_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
-            context['real_events'] = np.array(context["events"], dtype=np.object_)
-            context['real_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
+            context['events_str'] = np.empty(len(context["events"]), dtype=np.object_)
 
             for sequence_index in range(len(frames)):
                 trim_lookback = sequence_index != 0
@@ -512,7 +511,6 @@ class Processor(object):
 
                 context['surprisals'][s:e][s2:e2] = relative_surprisal
                 context['expected_events'][s:e][s2:e2] = suggested_events
-                context['real_events'][s:e][s2:e2] = self._decode(tokens, frame_time, True)
 
             # Post-process events
             def process_event(event: Event) -> Any:
@@ -548,8 +546,8 @@ class Processor(object):
                 else:
                     return event
 
-            for i, event in enumerate(context['real_events']):
-                context['real_events_str'][i] = process_event(event)
+            for i, event in enumerate(context['events']):
+                context['events_str'][i] = process_event(event)
             for i, event in enumerate(context['expected_events']):
                 context['expected_events_str'][i] = process_event(event)
 

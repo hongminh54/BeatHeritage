@@ -141,13 +141,13 @@ def ai_mod(
 
         context_suggestions = [
             Suggestion(context['context_type'], *z) for z in zip(
-                range(len(context['real_events'])),
+                range(len(context['events'])),
                 context['event_times'],
-                [groups[event_groups[i]] for i in range(len(context['real_events']))],
-                ["None"] * len(context['real_events']),
-                ["None"] * len(context['real_events']),
-                context['real_events'],
-                context['real_events_str'],
+                [groups[event_groups[i]] for i in range(len(context['events']))],
+                ["None"] * len(context['events']),
+                ["None"] * len(context['events']),
+                context['events'],
+                context['events_str'],
                 context['expected_events'],
                 context['expected_events_str'],
                 context['surprisals']
