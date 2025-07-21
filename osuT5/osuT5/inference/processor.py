@@ -1184,7 +1184,7 @@ class Processor(object):
         """
         events = []
         for token in tokens:
-            if token == self.tokenizer.eos_id:
+            if token == self.tokenizer.eos_id and not allow_non_events:
                 break
 
             try:
