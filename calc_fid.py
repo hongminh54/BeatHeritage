@@ -175,18 +175,18 @@ def get_rhythm(beatmap, passive=False):
     rhythm = set()
     for hit_object in beatmap.hit_objects(stacking=False):
         if isinstance(hit_object, Circle):
-            rhythm.add(int(hit_object.time.total_seconds() * 1000))
+            rhythm.add(int(hit_object.time.total_seconds() * 1000 + 1e-5))
         elif isinstance(hit_object, Slider):
             duration: timedelta = (hit_object.end_time - hit_object.time) / hit_object.repeat
-            rhythm.add(int(hit_object.time.total_seconds() * 1000))
+            rhythm.add(int(hit_object.time.total_seconds() * 1000 + 1e-5))
             if passive:
                 for i in range(hit_object.repeat):
-                    rhythm.add(int((hit_object.time + duration * (i + 1)).total_seconds() * 1000))
+                    rhythm.add(int((hit_object.time + duration * (i + 1)).total_seconds() * 1000 + 1e-5))
         elif isinstance(hit_object, Spinner):
             if passive:
-                rhythm.add(int(hit_object.end_time.total_seconds() * 1000))
+                rhythm.add(int(hit_object.end_time.total_seconds() * 1000 + 1e-5))
         elif isinstance(hit_object, HoldNote):
-            rhythm.add(int(hit_object.time.total_seconds() * 1000))
+            rhythm.add(int(hit_object.time.total_seconds() * 1000 + 1e-5))
 
     return rhythm
 
