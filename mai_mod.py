@@ -236,7 +236,7 @@ def ai_mod(
     print(f"Found {len(suggestions)} suggestions:")
     for category in categories:
         print(f"\n{category}:")
-        for item in suggestions_by_category[category]:
+        for item in suggestions_by_category[category][:10]:
             print(f"  - {item}")
 
 
