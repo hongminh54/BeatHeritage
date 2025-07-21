@@ -129,7 +129,7 @@ def get_args_from_beatmap(args: InferenceConfig, tokenizer: Tokenizer):
     if not result['success']:
         for error in result['errors']:
             print(f"Error: {error}")
-        return
+        raise ValueError("Invalid paths provided. Please check the errors above.")
 
     if not args.beatmap_path:
         # populate fair defaults for any inherited args that need to be filled
