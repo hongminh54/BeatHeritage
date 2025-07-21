@@ -248,7 +248,7 @@ def ai_mod(
 
         if category not in suggestions_by_category:
             suggestions_by_category[category] = []
-        suggestions_by_category[category].append(f"{timestamp_text(s.time)} - Surprisal: {s.surprisal:.0f}, Group: {s.group_str}: {explanation}")
+        suggestions_by_category[category].append(f"{timestamp_text(s.time)} (Surprisal: {s.surprisal:.0f}, Group: {s.group_str}) - {explanation}")
 
     # Print the suggestions by category
     console = Console(width=900)
