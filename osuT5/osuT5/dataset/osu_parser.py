@@ -183,7 +183,7 @@ class OsuParser:
         if isinstance(beatmap, Beatmap) and len(beatmap.hit_objects(stacking=False)) > 0:
             last_ho = beatmap.hit_objects(stacking=False)[-1]
             last_time = last_ho.end_time if hasattr(last_ho, "end_time") else last_ho.time
-            last_time = last_time.total_seconds() * 1000 + 1  # Add a small buffer to the last time
+            last_time = last_time.total_seconds() * 1000 + 0.999  # Add a small buffer to the last time
         elif song_length is not None:
             last_time = song_length
         else:
