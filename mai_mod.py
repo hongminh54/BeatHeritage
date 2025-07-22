@@ -91,6 +91,7 @@ class Suggestion:
     expected_event_str: str
     surprisal: float
     combo_index: int | None = None
+    timestamp_time: float | None = None
 
 
 def type_to_str(event_type: EventType) -> str:
@@ -166,6 +167,7 @@ def ai_mod(
                 context['expected_events'],
                 context['expected_events_str'],
                 context['surprisals'],
+                [None] * len(context['events']),
                 [None] * len(context['events']),
             )
         ]
@@ -243,19 +245,26 @@ def ai_mod(
         # Find the hit object that corresponds to this group and its combo index
         combo_index = 0
         for i, hitobject in enumerate(hitobjects):
+            if hitobject.time.total_seconds() * 1000 - 1 > s.time and i > 0:
+                s.combo_index = combo_index
+                s.timestamp_time = int(hitobjects[i - 1].time.total_seconds() * 1000 + 1e-5)
+                break
             combo_index += 1
             if hitobject.new_combo or isinstance(hitobject, Spinner) or (i > 0 and isinstance(hitobjects[i - 1], Spinner)) or (i > 0 and hitobject.time - hitobjects[i - 1].time > timedelta(seconds=10)):
                 combo_index = 1
-            if hitobject.time.total_seconds() * 1000 + 1 >= s.time:
-                s.combo_index = combo_index
-                break
+        if combo_index > 0 and s.combo_index is None:
+            s.combo_index = combo_index
+            s.timestamp_time = int(hitobjects[-1].time.total_seconds() * 1000 + 1e-5)
 
     def timestamp_text(s: Suggestion) -> str:
         t = s.time
+        t2 = s.timestamp_time
         timestamp = f"{t // 60000:02}:{(t // 1000) % 60:02}:{t % 1000:03}"
+        url = f"osu://edit/{t2 // 60000:02}:{(t2 // 1000) % 60:02}:{t2 % 1000:03}"
         if s.combo_index is not None:
-            timestamp += f" ({s.combo_index})"
-        return f"[link=osu://edit/{timestamp}][green]{timestamp}[/green][/link]"
+            url += f"%20({s.combo_index})"
+            # timestamp += f" ({s.combo_index})"
+        return f"[link={url}][green]{timestamp}[/green][/link]"
 
     def surprisal_text(surprisal: float) -> str:
         if surprisal >= 10000:
