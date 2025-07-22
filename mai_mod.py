@@ -192,7 +192,7 @@ def ai_mod(
                         break
                     if groups[j].event_type in anchor_types:
                         anchor_index += 1
-                return f"{type_to_str(group.event_type)} (Anchor #{anchor_index})"
+                return f"{type_to_str(group.event_type)} #{anchor_index}"
             else:
                 return type_to_str(group.event_type)
 
@@ -217,7 +217,7 @@ def ai_mod(
 
         suggestions.extend(context_suggestions)
 
-    suggestions.sort(key=lambda x: x.surprisal, reverse=True)
+    suggestions.sort(key=lambda x: x.time)
 
     # Filter suggestions
     suggestions = [
@@ -232,6 +232,16 @@ def ai_mod(
     def timestamp_text(t: float) -> str:
         timestamp = f"{t // 60000:02}:{(t // 1000) % 60:02}:{t % 1000:03}"
         return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
+
+    def surprisal_text(surprisal: float) -> str:
+        if surprisal >= 10000:
+            return f"[bold red]({surprisal:.0f})[/bold red]"
+        elif surprisal >= 1000:
+            return f" [bold red]({surprisal:.0f})[/bold red]"
+        elif surprisal >= 100:
+            return f"  [bold yellow]({surprisal:.0f})[/bold yellow]"
+        elif surprisal >= 10:
+            return f"   [bold]({surprisal:.0f})[/bold]"
 
     suggestions_by_category = {}
 
@@ -253,7 +263,7 @@ def ai_mod(
 
         if category not in suggestions_by_category:
             suggestions_by_category[category] = []
-        suggestions_by_category[category].append(f"{timestamp_text(s.time)} (Surprisal: {s.surprisal:.0f}, Group: {s.group_str}) - {explanation}")
+        suggestions_by_category[category].append(f"{surprisal_text(s.surprisal)} {timestamp_text(s.time)} ({s.group_str}) - {explanation}")
 
     # Print the suggestions by category
     console = Console(width=900)
@@ -262,7 +272,7 @@ def ai_mod(
     for category in categories:
         print(f"\n{category}:")
         for item in suggestions_by_category[category][:10]:
-            console.print(f"    {item}")
+            console.print(f" {item}")
 
 
 @hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
