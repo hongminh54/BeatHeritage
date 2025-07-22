@@ -301,7 +301,8 @@ def ai_mod(
     # Print the suggestions by category
     console = Console(width=900)
     categories = sorted(suggestions_by_category.keys())
-    print(f"Found {len(suggestions)} suggestions:")
+    console.print("The first value between parentheses represents the importance of the suggestion. Values above [red]1000[/red] are likely issues, whereas values below 100 are likely subjective")
+    console.print(f"Found {len(suggestions)} suggestions:")
     for category in categories:
         print(f"\n{category}:")
         for item in suggestions_by_category[category][:10]:
