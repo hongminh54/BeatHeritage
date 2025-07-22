@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from datetime import timedelta
 from pathlib import Path
 from string import Template
 from rich.console import Console
 
 import hydra
+from slider import Beatmap, Spinner
 
 from config import InferenceConfig
 from inference import prepare_args, get_args_from_beatmap, get_config, load_model
@@ -88,6 +90,7 @@ class Suggestion:
     expected_event: Event
     expected_event_str: str
     surprisal: float
+    combo_index: int | None = None
 
 
 def type_to_str(event_type: EventType) -> str:
@@ -162,7 +165,8 @@ def ai_mod(
                 context['events_str'],
                 context['expected_events'],
                 context['expected_events_str'],
-                context['surprisals']
+                context['surprisals'],
+                [None] * len(context['events']),
             )
         ]
 
@@ -229,9 +233,29 @@ def ai_mod(
             not (s.event.type in timing_types and s.expected_event.type == EventType.SNAPPING and s.next_group and abs(s.time - s.next_group.time) < 2))
     ]
 
-    def timestamp_text(t: float) -> str:
+    # Add hit object combo index to each suggestion with a hit object related group
+    hitobject_types = [EventType.CIRCLE, EventType.SPINNER, EventType.SPINNER_END, EventType.SLIDER_HEAD, EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR, EventType.LAST_ANCHOR, EventType.SLIDER_END, EventType.HOLD_NOTE, EventType.HOLD_NOTE_END, EventType.DRUMROLL, EventType.DRUMROLL_END, EventType.DENDEN, EventType.DENDEN_END]
+    beatmap = Beatmap.from_path(beatmap_path)
+    hitobjects = beatmap.hit_objects(stacking=False)
+    for s in suggestions:
+        if s.group.event_type not in hitobject_types:
+            continue
+        # Find the hit object that corresponds to this group and its combo index
+        combo_index = 0
+        for i, hitobject in enumerate(hitobjects):
+            combo_index += 1
+            if hitobject.new_combo or isinstance(hitobject, Spinner) or (i > 0 and isinstance(hitobjects[i - 1], Spinner)) or (i > 0 and hitobject.time - hitobjects[i - 1].time > timedelta(seconds=10)):
+                combo_index = 1
+            if hitobject.time.total_seconds() * 1000 + 1 >= s.time:
+                s.combo_index = combo_index
+                break
+
+    def timestamp_text(s: Suggestion) -> str:
+        t = s.time
         timestamp = f"{t // 60000:02}:{(t // 1000) % 60:02}:{t % 1000:03}"
-        return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
+        if s.combo_index is not None:
+            timestamp += f" ({s.combo_index})"
+        return f"[link=osu://edit/{timestamp}][green]{timestamp}[/green][/link]"
 
     def surprisal_text(surprisal: float) -> str:
         if surprisal >= 10000:
@@ -263,7 +287,7 @@ def ai_mod(
 
         if category not in suggestions_by_category:
             suggestions_by_category[category] = []
-        suggestions_by_category[category].append(f"{surprisal_text(s.surprisal)} {timestamp_text(s.time)} ({s.group_str}) - {explanation}")
+        suggestions_by_category[category].append(f"{surprisal_text(s.surprisal)} {timestamp_text(s)} ({s.group_str}) - {explanation}")
 
     # Print the suggestions by category
     console = Console(width=900)
