@@ -258,7 +258,7 @@ def ai_mod(
 
     def timestamp_text(s: Suggestion) -> str:
         t = s.time
-        t2 = s.timestamp_time
+        t2 = s.timestamp_time if s.timestamp_time is not None else t
         timestamp = f"{t // 60000:02}:{(t // 1000) % 60:02}:{t % 1000:03}"
         url = f"osu://edit/{t2 // 60000:02}:{(t2 // 1000) % 60:02}:{t2 % 1000:03}"
         if s.combo_index is not None:
