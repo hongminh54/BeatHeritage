@@ -1,0 +1,14 @@
+defaults:
+  - base_mai_mod
+  - inference: v30
+  - _self_
+  - override hydra/hydra_logging: disabled
+  - override hydra/job_logging: disabled
+
+beatmap_path: ''
+raw_output: false
+
+hydra:
+  output_subdir: null
+  job:
+    chdir: False

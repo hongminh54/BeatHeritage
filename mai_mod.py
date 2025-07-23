@@ -7,7 +7,7 @@ from rich.console import Console
 import hydra
 from slider import Beatmap, Spinner
 
-from config import InferenceConfig
+from config import MaiModConfig
 from inference import prepare_args, get_args_from_beatmap, get_config, load_model
 from osuT5.osuT5.dataset.data_utils import get_groups, Group
 from osuT5.osuT5.event import EventType, Event, ContextType
@@ -99,7 +99,7 @@ def type_to_str(event_type: EventType) -> str:
 
 
 def ai_mod(
-        args: InferenceConfig,
+        args: MaiModConfig,
         *,
         audio_path: str = None,
         beatmap_path: str = None,
@@ -108,8 +108,9 @@ def ai_mod(
         tokenizer,
         verbose=True,
 ):
-    audio_path = args.audio_path if audio_path is None else audio_path
-    beatmap_path = args.beatmap_path if beatmap_path is None else beatmap_path
+    i_args = args.inference
+    audio_path = i_args.audio_path if audio_path is None else audio_path
+    beatmap_path = i_args.beatmap_path if beatmap_path is None else beatmap_path
 
     # Do some validation
     if not Path(audio_path).exists() or not Path(audio_path).is_file():
@@ -122,8 +123,8 @@ def ai_mod(
         if beatmap_path_obj.suffix.lower() != '.osu':
             raise ValueError(f"Beatmap file must have .osu extension: {beatmap_path}")
 
-    preprocessor = Preprocessor(args, parallel=False)
-    processor = Processor(args, model, tokenizer)
+    preprocessor = Preprocessor(i_args, parallel=False)
+    processor = Processor(i_args, model, tokenizer)
 
     audio = preprocessor.load(audio_path)
     sequences = preprocessor.segment(audio)
@@ -145,7 +146,7 @@ def ai_mod(
     # Also skip anything below 1 relative suprisal
     suggestions: list[Suggestion] = []
     for context in result:
-        groups, group_indices = get_groups(context['events'], event_times=context['event_times'], types_first=args.train.data.types_first)
+        groups, group_indices = get_groups(context['events'], event_times=context['event_times'], types_first=i_args.train.data.types_first)
         # Group indices map each group index to a list of indices of the events in the original list
         # We need the reverse mapping to get the groups for each event
         event_groups: list[int] = [0] * len(context['events'])
@@ -267,14 +268,17 @@ def ai_mod(
         return f"[link={url}][green]{timestamp}[/green][/link]"
 
     def surprisal_text(surprisal: float) -> str:
+        surprisal /= 10.0  # Normalize surprisal to a more readable scale
         if surprisal >= 10000:
             return f"[bold red]({surprisal:.0f})[/bold red]"
         elif surprisal >= 1000:
             return f" [bold red]({surprisal:.0f})[/bold red]"
         elif surprisal >= 100:
-            return f"  [bold yellow]({surprisal:.0f})[/bold yellow]"
+            return f"  [bold red]({surprisal:.0f})[/bold red]"
         elif surprisal >= 10:
-            return f"   [bold]({surprisal:.0f})[/bold]"
+            return f"   [bold yellow]({surprisal:.0f})[/bold yellow]"
+        elif surprisal >= 1:
+            return f"    [bold]({surprisal:.0f})[/bold]"
 
     suggestions_by_category = {}
 
@@ -300,24 +304,29 @@ def ai_mod(
 
     # Print the suggestions by category
     console = Console(width=900)
+    p = print if args.raw_output else console.print
+
     categories = sorted(suggestions_by_category.keys())
-    console.print("The first value between parentheses represents the importance of the suggestion. Values above [red]1000[/red] are likely issues, whereas values below 100 are likely subjective")
-    console.print(f"Found {len(suggestions)} suggestions:")
+    p("The first value between parentheses represents the importance of the suggestion. Values above [red]1000[/red] are likely issues, whereas values below 100 are likely subjective")
+    p(f"Found {len(suggestions)} suggestions:")
     for category in categories:
         print(f"\n{category}:")
         for item in suggestions_by_category[category][:10]:
-            console.print(f" {item}")
+            p(f" {item}")
 
 
-@hydra.main(config_path="configs/inference", config_name="v30", version_base="1.1")
-def main(args: InferenceConfig):
-    args.add_to_beatmap = True
-    prepare_args(args)
+@hydra.main(config_path="configs", config_name="mai_mod", version_base="1.1")
+def main(args: MaiModConfig):
+    i_args = args.inference
+    i_args.add_to_beatmap = True
+    i_args.beatmap_path = args.beatmap_path
 
-    model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, False)
+    prepare_args(i_args)
 
-    get_args_from_beatmap(args, tokenizer)
-    generation_config, beatmap_config = get_config(args)
+    model, tokenizer = load_model(i_args.model_path, i_args.train, i_args.device, i_args.max_batch_size, False)
+
+    get_args_from_beatmap(i_args, tokenizer)
+    generation_config, beatmap_config = get_config(i_args)
 
     return ai_mod(
         args,

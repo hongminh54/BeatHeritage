@@ -127,6 +127,15 @@ class FidConfig:
     hydra: Any = MISSING
 
 
+@dataclass
+class MaiModConfig:
+    beatmap_path: str = ''  # Path to .osu file
+    raw_output: bool = False
+    inference: InferenceConfig = field(default_factory=InferenceConfig)  # Training settings for osuT5 model
+    hydra: Any = MISSING
+
+
 cs = ConfigStore.instance()
-cs.store(name="base_fid", node=FidConfig)
 cs.store(group="inference", name="base", node=InferenceConfig)
+cs.store(name="base_fid", node=FidConfig)
+cs.store(name="base_mai_mod", node=MaiModConfig)
