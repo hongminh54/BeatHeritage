@@ -559,7 +559,7 @@ if __name__ == '__main__':
     )
 
     # Start the pywebview event loop (no args needed here now)
-    webview.start(debug=True)
+    webview.start(debug=False)
 
     print("Pywebview window closed. Exiting application.")
     # Flask thread will exit automatically as it's a daemon
