@@ -169,9 +169,15 @@ python mai_mod.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji 
 This will print the modding suggestions to the console, which you can then apply to your beatmap manually.
 Suggestions are ordered by the 'surprisal' which is a measure of how unexpected the model found the issue to be, so you can prioritize the most important issue
 
-MaiMod also accepts the same arguments as `inference.py`, so you can customize the modding process by adding additional context to the AI like the `mapper_id`.
+### MaiMod GUI
+To run the MaiMod Web UI, you'll need to install Mapperatorinator.
+Then, run the `mai_mod_web_ui.py` script. This will start a local web server and automatically open the UI in a new window:
 
-MaiMod Web UI coming soon.
+```sh
+python mai_mod_web_ui.py
+```
+
+<img width="850" height="1019" alt="afbeelding" src="https://github.com/user-attachments/assets/67c03a43-a7bd-4265-a5b1-5e4d62aca1fa" />
 
 ## Overview
 
