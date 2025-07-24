@@ -171,10 +171,10 @@ Suggestions are ordered by the 'surprisal' which is a measure of how unexpected 
 
 ### MaiMod GUI
 To run the MaiMod Web UI, you'll need to install Mapperatorinator.
-Then, run the `mai_mod_web_ui.py` script. This will start a local web server and automatically open the UI in a new window:
+Then, run the `mai_mod_ui.py` script. This will start a local web server and automatically open the UI in a new window:
 
 ```sh
-python mai_mod_web_ui.py
+python mai_mod_ui.py
 ```
 
 <img width="850" height="1019" alt="afbeelding" src="https://github.com/user-attachments/assets/67c03a43-a7bd-4265-a5b1-5e4d62aca1fa" />
