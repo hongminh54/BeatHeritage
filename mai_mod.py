@@ -279,6 +279,8 @@ def ai_mod(
             return f"   [bold yellow]({surprisal:.0f})[/bold yellow]"
         elif surprisal >= 1:
             return f"    [bold]({surprisal:.0f})[/bold]"
+        else:
+            return f"    ({surprisal:.0f})"
 
     suggestions_by_category = {}
 
