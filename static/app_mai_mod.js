@@ -53,10 +53,7 @@ $(document).ready(function() {
     // File Browser Manager
     const FileBrowser = {
         init() {
-            window.addEventListener('pywebviewready', () => {
-                console.log("pywebview API is ready.");
-                this.attachBrowseHandlers();
-            });
+            this.attachBrowseHandlers();
         },
 
         attachBrowseHandlers() {
