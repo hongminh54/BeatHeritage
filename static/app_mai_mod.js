@@ -507,7 +507,7 @@ $(document).ready(function() {
                         // Parse links inside the description text
                         const formattedDescription = description.replace(
                             /\[link=([^\]]+)\](.*?)\[\/link\]/g,
-                            '<a href="$1" target="_blank">$2</a>'
+                            '<a href="$1" class="issue-timestamp">$2</a>'
                         );
 
                         if (!currentSection) {

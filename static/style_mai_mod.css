@@ -80,26 +80,26 @@ body {
 }
 
 /* Link Styles with animated underline */
-/*a {*/
-/*  color: var(--accent-color);*/
-/*  text-decoration: none;*/
-/*  position: relative;*/
-/*}*/
+a {
+  color: var(--accent-color);
+  text-decoration: none;
+  position: relative;
+}
 
-/*a::after {*/
-/*  content: "";*/
-/*  position: absolute;*/
-/*  width: 0%;*/
-/*  height: 2px;*/
-/*  bottom: -2px;*/
-/*  left: 0;*/
-/*  background: var(--accent-color);*/
-/*  transition: width var(--transition-speed) ease;*/
-/*}*/
+a::after {
+  content: "";
+  position: absolute;
+  width: 0%;
+  height: 2px;
+  bottom: -2px;
+  left: 0;
+  background: var(--accent-color);
+  transition: width var(--transition-speed) ease;
+}
 
-/*a:hover::after {*/
-/*  width: 100%;*/
-/*}*/
+a:hover::after {
+  width: 100%;
+}
 
 /* Headings with fade in down animation */
 h1, h2, h3 {
@@ -913,7 +913,7 @@ h1 {
 .section-header h2 {
     margin: 0;
     font-size: 1.2em;
-    color: #f5c2e7;
+    color: #cfffff;
 }
 
 /* --- Expand/Collapse Functionality --- */
@@ -988,9 +988,16 @@ h1 {
 .issue-timestamp {
     color: #a6e3a1;
     text-decoration: none;
-    padding: 2px 6px;
+    padding: 1px 5px;
     border-radius: 4px;
     background-color: rgba(166, 227, 161, 0.15); /* Transparent green background */
+    content: none;
+}
+
+/* Explicitly remove the ::after pseudo-element for .issue-timestamp */
+.issue-timestamp::after {
+    content: none;
+    display: none; /* Ensure it's not rendered at all */
 }
 
 .issue-timestamp:hover {
@@ -1007,6 +1014,7 @@ h1 {
 
 .issue-description a {
     color: #89b4fa; /* Color for links inside the description */
+    background-color: rgba(137, 180, 250, 0.15); /* Transparent blue background */
     text-decoration: none;
 }
 .issue-description a:hover {
