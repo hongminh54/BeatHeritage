@@ -459,7 +459,7 @@ $(document).ready(function() {
             container.empty(); // Clear previous content
 
             // Regex to parse an issue line, now capturing any color name.
-            const issueRegex = /^\s*\[bold(?:\s+([a-zA-Z]+))?\]\((\d+)\)\[\/bold.*?\]\s*\[link=([^\]]+)\]\[green\]([^\]]+)\[\/green\]\[\/link\]\s*(\([^\)]+\))\s*-\s*(.*)$/;
+            const issueRegex = /^\s*(?:\[bold(?:\s+([a-zA-Z]+))?\])?\((\d+)\)(?:\[\/bold.*?\])?\s*\[link=([^\]]+)\]\[green\]([^\]]+)\[\/green\]\[\/link\]\s*(\([^\)]+\))\s*-\s*(.*)$/;
 
             // Function to create a new section
             const createSection = (title) => {
