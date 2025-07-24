@@ -523,6 +523,9 @@ class Processor(object):
                 # Convert distance events to string
                 elif event.type == EventType.DISTANCE:
                     return f"{event.value}"
+                # Convert mania column to string
+                elif event.type == EventType.MANIA_COLUMN:
+                    return f"{event.value + 1}"
                 # Convert volume to string
                 elif event.type == EventType.VOLUME:
                     return f"{event.value}%"
@@ -533,6 +536,9 @@ class Processor(object):
                 elif event.type == EventType.TIME_SHIFT:
                     timestamp = f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
                     return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
+                # Convert SV events to string
+                elif event.type == EventType.SCROLL_SPEED:
+                    return f"x{(event.value / 100):.2f}"
                 # Convert hitsound events to string
                 elif event.type == EventType.HITSOUND:
                     hitsound_map = ["whistle", "finish", "clap"]

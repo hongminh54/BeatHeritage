@@ -2,6 +2,10 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from string import Template
+
+from hydra.core.global_hydra import GlobalHydra
+from hydra.core.hydra_config import HydraConfig
+from omegaconf import OmegaConf
 from rich.console import Console
 
 import hydra
@@ -15,8 +19,6 @@ from osuT5.osuT5.inference import Preprocessor, Processor, GenerationConfig
 from osuT5.osuT5.inference.server import InferenceClient
 from osuT5.osuT5.model import Mapperatorinator
 
-different_anchor_type = "Expected $expected_type instead of $real_type."
-
 # These event types are designed for V30 tokenization
 mod_explanations = {
     # Real, Expected
@@ -24,45 +26,18 @@ mod_explanations = {
     (EventType.POS_X, EventType.POS_X): ("Compose", "Expected position $expected_value instead of $real_value."),
     (EventType.POS_Y, EventType.POS_Y): ("Compose", "Expected position $expected_value instead of $real_value."),
     (EventType.POS, EventType.POS): ("Compose", "Expected position $expected_value instead of $real_value."),
-    (EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.BEZIER_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.BEZIER_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.PERFECT_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.PERFECT_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.PERFECT_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.RED_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.RED_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.RED_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.CATMULL_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.CATMULL_ANCHOR, EventType.LAST_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.LAST_ANCHOR, EventType.BEZIER_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.LAST_ANCHOR, EventType.PERFECT_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.LAST_ANCHOR, EventType.RED_ANCHOR): ("Slider", different_anchor_type),
-    (EventType.LAST_ANCHOR, EventType.CATMULL_ANCHOR): ("Slider", different_anchor_type),
+    (EventType.MANIA_COLUMN, EventType.MANIA_COLUMN): ("Compose", "Expected column $expected_value instead of $real_value."),
     (EventType.HITSOUND, EventType.HITSOUND): ("Hit Sounds", "Expected hitsound $expected_value instead of $real_value."),
     (EventType.VOLUME, EventType.VOLUME): ("Hit Sounds", "Expected volume $expected_value instead of $real_value."),
     (EventType.HITSOUND, EventType.NEW_COMBO): ("New Combos", "Expected new combo."),
     (EventType.NEW_COMBO, EventType.HITSOUND): ("New Combos", "Unexpected new combo."),
-    (EventType.HITSOUND, EventType.LAST_ANCHOR): ("Rhythm", "Expected end of slider repeats."),
-    (EventType.CIRCLE, EventType.SLIDER_HEAD): ("Rhythm", "Expected a slider instead of a circle."),
-    (EventType.CIRCLE, EventType.SPINNER): ("Rhythm", "Expected a spinner instead of a circle."),
-    (EventType.SLIDER_HEAD, EventType.CIRCLE): ("Rhythm", "Expected a circle instead of a slider."),
-    (EventType.SLIDER_HEAD, EventType.SPINNER): ("Rhythm", "Expected a spinner instead of a slider."),
-    (EventType.SPINNER, EventType.CIRCLE): ("Rhythm", "Expected a circle instead of a spinner."),
-    (EventType.SPINNER, EventType.SLIDER_HEAD): ("Rhythm", "Expected a slider instead of a spinner."),
-    (EventType.SNAPPING, EventType.SNAPPING): ("Timing", "Expected snapping $expected_value instead of $real_value."),
+    (EventType.HITSOUND, EventType.LAST_ANCHOR): ("Rhythm", "Expected end of slider repeats."),  # Types last
+    (EventType.HITSOUND, EventType.SLIDER_END): ("Rhythm", "Expected end of slider repeats."),  # Types first
     (EventType.SNAPPING, EventType.BEAT): ("Timing", "Hit object likely not snapped to a beat."),
     (EventType.SNAPPING, EventType.MEASURE): ("Timing", "Hit object likely not snapped to a beat."),
     (EventType.SNAPPING, EventType.TIMING_POINT): ("Timing", "Hit object likely not snapped to a beat."),
-    (EventType.TIME_SHIFT, EventType.CONTROL): ("Timing", "Expected end of beatmap."),
-    (EventType.TIME_SHIFT, EventType.TIME_SHIFT): ("Timing", "Expected object at $expected_value instead of $real_value."),
-    (EventType.TIME_SHIFT, EventType.DISTANCE): ("Slider", "Expected additional anchors."),
-    (EventType.DISTANCE, EventType.TIME_SHIFT): ("Slider", "Expected last anchor."),
+    (EventType.TIME_SHIFT, EventType.DISTANCE): ("Sliders", "Expected additional anchors."),
+    (EventType.DISTANCE, EventType.TIME_SHIFT): ("Sliders", "Expected last anchor."),
     (EventType.BEAT, EventType.SNAPPING): ("Timing", "Unexpected beat."),
     (EventType.BEAT, EventType.MEASURE): ("Timing", "Expected new measure."),
     (EventType.BEAT, EventType.TIMING_POINT): ("Timing", "Expected new timing point."),
@@ -141,6 +116,7 @@ def ai_mod(
     anchor_types = [EventType.RED_ANCHOR, EventType.BEZIER_ANCHOR, EventType.CATMULL_ANCHOR, EventType.PERFECT_ANCHOR]
     hs_types = [EventType.HITSOUND, EventType.VOLUME]
     timing_types = [EventType.BEAT, EventType.MEASURE, EventType.TIMING_POINT]
+    hitobject_types = [EventType.CIRCLE, EventType.SPINNER, EventType.SPINNER_END, EventType.SLIDER_HEAD, EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR, EventType.LAST_ANCHOR, EventType.SLIDER_END, EventType.HOLD_NOTE, EventType.HOLD_NOTE_END, EventType.DRUMROLL, EventType.DRUMROLL_END, EventType.DENDEN, EventType.DENDEN_END]
 
     # Print for every context and every event type, the top 10 events with the highest surprisal
     # Also skip anything below 1 relative suprisal
@@ -237,7 +213,6 @@ def ai_mod(
     ]
 
     # Add hit object combo index to each suggestion with a hit object related group
-    hitobject_types = [EventType.CIRCLE, EventType.SPINNER, EventType.SPINNER_END, EventType.SLIDER_HEAD, EventType.BEZIER_ANCHOR, EventType.PERFECT_ANCHOR, EventType.CATMULL_ANCHOR, EventType.RED_ANCHOR, EventType.LAST_ANCHOR, EventType.SLIDER_END, EventType.HOLD_NOTE, EventType.HOLD_NOTE_END, EventType.DRUMROLL, EventType.DRUMROLL_END, EventType.DENDEN, EventType.DENDEN_END]
     beatmap = Beatmap.from_path(beatmap_path)
     hitobjects = beatmap.hit_objects(stacking=False)
     for s in suggestions:
@@ -285,11 +260,46 @@ def ai_mod(
     suggestions_by_category = {}
 
     for s in suggestions:
-        if s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and s.group.event_type not in timing_types and s.next_beat_group and abs(s.expected_event.value - s.next_beat_group.time) <= 10:
+        if i_args.train.data.add_timing and s.event.type == EventType.TIME_SHIFT and s.expected_event.type == EventType.TIME_SHIFT and s.group.event_type not in timing_types and s.next_beat_group and abs(s.expected_event.value - s.next_beat_group.time) <= 10:
             # The model predicted the time of the next beat, so it expects no hit object here
             category, explanation_template = ("Rhythm", "Unexpected hit object.")
+        elif s.event.type == EventType.LAST_ANCHOR and s.expected_event.type in anchor_types:
+            category, explanation_template = ("Sliders", "Expected additional anchors.")
+        elif s.event.type in anchor_types and s.expected_event.type == EventType.LAST_ANCHOR:
+            category, explanation_template = ("Sliders", "Expected last anchor.")
+        elif s.event.type in anchor_types and s.expected_event.type in anchor_types:
+            category, explanation_template = ("Sliders", "Expected a $expected_type instead of a $real_type.")
+        elif s.event.type in hitobject_types and s.expected_event.type in hitobject_types:
+            category, explanation_template = ("Rhythm", "Expected a $expected_type instead of a $real_type.")
+        elif s.event.type in [EventType.TIME_SHIFT, EventType.SNAPPING] and s.expected_event.type == s.event.type:
+            if s.event.type == EventType.TIME_SHIFT:
+                explanation_template = "Expected object at $expected_value instead of $real_value."
+            else:
+                explanation_template = "Expected snapping $expected_value instead of $real_value."
+            if s.group.event_type in hitobject_types:
+                category = "Rhythm"
+            elif s.group.event_type == EventType.SCROLL_SPEED_CHANGE:
+                category = "Scroll Speeds"
+            else:
+                category = "Timing"
+        elif s.event.type == EventType.SCROLL_SPEED and s.expected_event.type == EventType.SCROLL_SPEED:
+            if beatmap.mode == 0:
+                # In osu!standard, scroll speed is called 'Slider Velocity'
+                category, explanation_template = ("Sliders", "Expected slider velocity $expected_value instead of $real_value.")
+            else:
+                # In any other game mode, scroll speed is called 'Scroll Speed'
+                category, explanation_template = ("Scroll Speeds", "Expected scroll speed $expected_value instead of $real_value.")
+        elif s.expected_event.type == EventType.CONTROL:
+            if s.event.type == EventType.KIAI:
+                if s.event.value == 1:
+                    category, explanation_template = ("Kiai", "Unexpected kiai section start.")
+                else:
+                    category, explanation_template = ("Kiai", "Unexpected kiai section end.")
+            else:
+                category, explanation_template = ("Timing", "Expected end of beatmap.")
         else:
             category, explanation_template = mod_explanations.get((s.event.type, s.expected_event.type), ("Misc", "Expected $expected_type $expected_value instead of $real_type $real_value."))
+
         explanation_template = Template(explanation_template)
         explanation = explanation_template.safe_substitute({
             'expected_value': s.expected_event_str,
@@ -319,8 +329,32 @@ def ai_mod(
 
 @hydra.main(config_path="configs", config_name="mai_mod", version_base="1.1")
 def main(args: MaiModConfig):
+    # Select inference config based on the beatmap gamemode
+    if args.beatmap_path:
+        beatmap_path = Path(args.beatmap_path)
+        if not beatmap_path.exists() or not beatmap_path.is_file():
+            raise FileNotFoundError(f"Provided beatmap file path does not exist: {args.beatmap_path}")
+        if beatmap_path.suffix.lower() != '.osu':
+            raise ValueError(f"Beatmap file must have .osu extension: {args.beatmap_path}")
+
+        # Load the beatmap to determine the gamemode
+        beatmap = Beatmap.from_path(beatmap_path)
+
+        if beatmap.mode in args.inference.train.data.gamemodes:
+            # We can use the current inference config
+            pass
+        else:
+            # Fallback to V31
+            original_cli_overrides = HydraConfig.get().overrides.task
+            merged_overrides = ["inference=v31"]
+            merged_overrides.extend(original_cli_overrides)
+            print(f"\nOriginal Command-Line Overrides: {original_cli_overrides}")
+            GlobalHydra.instance().clear()
+            with hydra.initialize(version_base="1.1", config_path="configs"):
+                conf = hydra.compose(config_name="mai_mod", overrides=merged_overrides)
+                args.inference = OmegaConf.to_object(conf).inference
+
     i_args = args.inference
-    i_args.add_to_beatmap = True
     i_args.beatmap_path = args.beatmap_path
     i_args.audio_path = args.audio_path
 
