@@ -6,6 +6,7 @@ defaults:
   - override hydra/job_logging: disabled
 
 beatmap_path: ''
+audio_path: ''
 raw_output: false
 
 hydra:
