@@ -280,6 +280,8 @@ def ai_mod(
                 category = "Rhythm"
             elif s.group.event_type == EventType.SCROLL_SPEED_CHANGE:
                 category = "Scroll Speeds"
+            elif s.group.event_type == EventType.KIAI:
+                category = "Kiai"
             else:
                 category = "Timing"
         elif s.event.type == EventType.SCROLL_SPEED and s.expected_event.type == EventType.SCROLL_SPEED:
