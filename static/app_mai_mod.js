@@ -242,6 +242,11 @@ $(document).ready(function() {
         init() {
             $('#inferenceForm').submit((e) => this.handleSubmit(e));
             $('#cancel-button').click(() => this.cancelInference());
+
+            // Add a single click event handler for all section headers (event delegation)
+            $('#output-container').on('click', '.section-header', function() {
+                $(this).closest('.issue-section').toggleClass('collapsed');
+            });
         },
 
         async handleSubmit(e) {
@@ -534,11 +539,6 @@ $(document).ready(function() {
                         currentSection.find('.issue-list-content').append(issueItem);
                     }
                 }
-            });
-
-            // Add a single click event handler for all section headers (event delegation)
-            container.on('click', '.section-header', function() {
-                $(this).closest('.issue-section').toggleClass('collapsed');
             });
 
             $("#output-container").show();
