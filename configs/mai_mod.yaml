@@ -10,5 +10,5 @@ raw_output: false
 
 hydra:
   output_subdir: null
-  job:
-    chdir: False
+  run:
+    dir: .
