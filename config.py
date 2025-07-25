@@ -133,6 +133,7 @@ class MaiModConfig:
     beatmap_path: str = ''  # Path to .osu file
     audio_path: str = ''  # Path to input audio
     raw_output: bool = False
+    precision: str = 'fp32'         # Lower precision for speed (fp32/bf16/amp)
     inference: InferenceConfig = field(default_factory=InferenceConfig)  # Training settings for osuT5 model
     hydra: Any = MISSING
 

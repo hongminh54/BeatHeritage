@@ -75,6 +75,7 @@ class Processor(object):
     def __init__(self, args: InferenceConfig, model: Mapperatorinator | InferenceClient, tokenizer: Tokenizer, cfg_scale: float = None):
         """Model inference stage that processes sequences."""
         self.device = args.device
+        self.precision = args.precision
         self.args = args
         self.model = model
         self.tokenizer = tokenizer
@@ -155,6 +156,7 @@ class Processor(object):
 
     def model_generate(self, model_kwargs, **generate_kwargs: Any) -> Any:
         generate_kwargs2 = generate_kwargs | dict(
+            precision=self.precision,
             do_sample=self.do_sample,
             num_beams=self.num_beams,
             top_p=self.top_p,
@@ -176,6 +178,7 @@ class Processor(object):
 
     def model_forward(self, model_kwargs) -> Any:
         generate_kwargs2 = dict(
+            precision=self.precision,
             cfg_scale=self.cfg_scale,
         )
 

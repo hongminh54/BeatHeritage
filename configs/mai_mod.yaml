@@ -8,6 +8,7 @@ defaults:
 beatmap_path: ''
 audio_path: ''
 raw_output: false
+precision: 'amp'         # Lower precision for speed (fp32/bf16/amp)
 
 hydra:
   output_subdir: null

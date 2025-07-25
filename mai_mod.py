@@ -359,6 +359,7 @@ def main(args: MaiModConfig):
     i_args = args.inference
     i_args.beatmap_path = args.beatmap_path
     i_args.audio_path = args.audio_path
+    i_args.precision = args.precision
 
     prepare_args(i_args)
 
