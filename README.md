@@ -167,7 +167,11 @@ To run MaiMod locally, you'll need to install Mapperatorinator. Then, run the `m
 python mai_mod.py beatmap_path="'C:\Users\USER\AppData\Local\osu!\Songs\1 Kenji Ninuma - DISCO PRINCE\Kenji Ninuma - DISCOPRINCE (peppy) [Normal].osu'"
 ```
 This will print the modding suggestions to the console, which you can then apply to your beatmap manually.
-Suggestions are ordered by the 'surprisal' which is a measure of how unexpected the model found the issue to be, so you can prioritize the most important issue
+Suggestions are ordered chronologically and grouped into categories.
+The first value in the circle indicates the 'surprisal' which is a measure of how unexpected the model found the issue to be, so you can prioritize the most important issues.
+
+The model can make mistakes, especially on low surprisal issues, so always double-check the suggestions before applying them to your beatmap.
+The main goal is to help you narrow down the search space for potential issues, so you don't have to manually check every single hit object in your beatmap.
 
 ### MaiMod GUI
 To run the MaiMod Web UI, you'll need to install Mapperatorinator.
