@@ -479,6 +479,12 @@ def load_model(
 
         model.eval()
         model.to(device)
+
+        # Cast every submodule to bfloat16 except for the spectrogram module
+        for name, module in model.named_modules():
+            if name != "" and "spectrogram" not in name:
+                module.to(torch.bfloat16)
+
         print(f"Model loaded: {ckpt_path_str} on device {device}")
         return model
 

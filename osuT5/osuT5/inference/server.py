@@ -39,6 +39,7 @@ def get_eos_token_id(tokenizer, lookback_time: float = 0, lookahead_time: float 
 def model_generate(model, tokenizer, model_kwargs, generate_kwargs):
     # To device
     model_kwargs = {k: v.to(model.device) if isinstance(v, torch.Tensor) else v for k, v in model_kwargs.items()}
+    model_kwargs = {k: v.to(torch.bfloat16) if k != "inputs" and isinstance(v, torch.Tensor) and v.dtype == torch.float32 else v for k, v in model_kwargs.items()}
     batch_size = model_kwargs['inputs'].shape[0]
     # print(f"[Model Generate] Batch size: {batch_size}, Model device: {model.device}")
 
@@ -104,6 +105,7 @@ def model_forward(model, model_kwargs, generate_kwargs):
     # To device
     model_kwargs = {k: v.to(model.device) if isinstance(v, torch.Tensor) else v for k, v in model_kwargs.items()}
     model_kwargs["frames"] = model_kwargs.pop('inputs', None)  # Rename for compatibility
+    model_kwargs = {k: v.to(torch.bfloat16) if k != "frames" and isinstance(v, torch.Tensor) and v.dtype == torch.float32 else v for k, v in model_kwargs.items()}
     cfg_scale = generate_kwargs.pop('cfg_scale', 1.0)
 
     # Prepare inputs for the model
@@ -116,7 +118,7 @@ def model_forward(model, model_kwargs, generate_kwargs):
 
     # Perform forward pass
     logits = model.forward(**model_kwargs).logits
-    logits = logits_processor_list(model_kwargs["decoder_input_ids"], logits).cpu()
+    logits = logits_processor_list(model_kwargs["decoder_input_ids"], logits).cpu().to(torch.float32)
     return logits
 
 

@@ -80,4 +80,4 @@ class MelSpectrogram(nn.Module):
         if self.log_scale:
             spectrogram = torch.log1p(spectrogram)
         spectrogram = spectrogram.permute(0, 2, 1)
-        return spectrogram
+        return spectrogram.to(torch.bfloat16)
