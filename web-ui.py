@@ -1,3 +1,4 @@
+import excepthook  # noqa
 import functools
 import os
 import platform

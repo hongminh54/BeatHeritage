@@ -1,3 +1,4 @@
+import excepthook  # noqa
 import os.path
 from functools import reduce
 from pathlib import Path
