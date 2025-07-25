@@ -145,6 +145,7 @@ class Mapperatorinator(PreTrainedModel, GenerationMixin):
         inputs_embeds = None
         if encoder_outputs is None and frames is not None:
             frames = self.spectrogram(frames)  # (N, L, M)
+            frames = frames.to(dtype=self.transformer.dtype)  # Ensure correct dtype for the model
             conds = []
 
             if self.do_style_embed:
@@ -348,6 +349,7 @@ class OsuTEncoder(nn.Module):
             beatmap_idx = torch.full([batch_size], self.num_classes, dtype=torch.long, device=device)
 
         frames = self.spectrogram(frames)  # (N, L, M)
+        frames = frames.to(dtype=self.base.dtype)  # Ensure correct dtype for the model
         conds = []
 
         if self.do_style_embed:
