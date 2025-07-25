@@ -526,7 +526,7 @@ $(document).ready(function() {
                         // Build the issue item with the new structure
                         const issueItem = $(`
                             <div class="issue-item">
-                                <div class="severity-circle" style="background-color: ${color}; font-size: ${fontSize};"">${severity}</div>
+                                <div class="severity-circle" style="background-color: ${color}; font-size: ${fontSize};"" title="The importance of the suggestion. Values above 100 are likely issues, whereas values below 10 are likely subjective.">${severity}</div>
                                 <a href="${link}" class="issue-timestamp">${timestamp}</a>
                                 <span class="issue-object">${object}</span>
                                 <span class="issue-description">- ${formattedDescription}</span>
