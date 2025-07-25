@@ -451,6 +451,7 @@ def load_model(
         device,
         max_batch_size: int = 8,
         use_server: bool = False,
+        precision: str = "fp32",
 ):
     if ckpt_path_str == "":
         raise ValueError("Model path is empty.")
@@ -480,10 +481,11 @@ def load_model(
         model.eval()
         model.to(device)
 
-        # Cast every submodule to bfloat16 except for the spectrogram module
-        for name, module in model.named_modules():
-            if name != "" and "spectrogram" not in name:
-                module.to(torch.bfloat16)
+        if precision == "bf16":
+            # Cast every submodule to bfloat16 except for the spectrogram module
+            for name, module in model.named_modules():
+                if name != "" and "spectrogram" not in name:
+                    module.to(torch.bfloat16)
 
         print(f"Model loaded: {ckpt_path_str} on device {device}")
         return model
@@ -541,7 +543,7 @@ def load_diff_model(
 def main(args: InferenceConfig):
     prepare_args(args)
 
-    model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, args.use_server)
+    model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, args.use_server, args.precision)
 
     diff_model, diff_tokenizer, refine_model = None, None, None
     if args.generate_positions:

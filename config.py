@@ -42,6 +42,7 @@ class InferenceConfig:
     # Inference settings
     seed: Optional[int] = None  # Random seed
     device: str = 'auto'  # Inference device (cpu/cuda/mps/auto)
+    precision: str = 'fp32'         # Lower precision for speed (fp32/bf16/amp)
     add_to_beatmap: bool = False  # Add generated content to the reference beatmap
     export_osz: bool = False  # Export beatmap as .osz file
     start_time: Optional[int] = None  # Start time of audio to generate beatmap for
