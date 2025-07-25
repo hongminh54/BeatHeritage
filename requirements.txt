@@ -2,7 +2,7 @@ accelerate
 pydub
 nnAudio
 PyYAML
-transformers
+transformers==4.53.3
 hydra-core
 tensorboard
 slider @ git+https://github.com/OliBomby/slider.git@gedagedigedagedaoh
