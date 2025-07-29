@@ -451,14 +451,6 @@ class Processor(object):
             model_kwargs=model_kwargs,
             req_special_tokens=req_special_tokens,
         )
-        result = self._batched_inference(
-            self.model_forward,
-            cond_prompts,
-            uncond_prompts,
-            frames,
-            model_kwargses,
-            verbose,
-        )
 
         for context in out_context_data:
             context['surprisals'] = np.zeros(len(context["events"]), dtype=np.float32)
@@ -466,100 +458,115 @@ class Processor(object):
             context['expected_events_str'] = np.empty(len(context["events"]), dtype=np.object_)
             context['events_str'] = np.empty(len(context["events"]), dtype=np.object_)
 
-            for sequence_index in range(len(frames)):
-                trim_lookback = sequence_index != 0
-                trim_lookahead = sequence_index != len(sequences[0]) - 1
+        results = self._batched_inference(
+            self.model_forward,
+            cond_prompts,
+            uncond_prompts,
+            frames,
+            model_kwargses,
+            verbose=verbose,
+            generator=True,
+        )
 
-                frame_time = frame_times[sequence_index].item()
+        sequence_index = 0
+        for batch in results:
+            for result in batch:
+                for context in out_context_data:
+                    trim_lookback = sequence_index != 0
+                    trim_lookahead = sequence_index != len(sequences[0]) - 1
 
-                # Get relevant tokens for current frame
-                s, e = self._get_events_time_range(context["event_times"], frame_time, frame_time + self.miliseconds_per_sequence)
-                events, event_times = context["events"][s:e], context["event_times"][s:e]
-                tokens = self._encode(events, frame_time).squeeze(0)
-                seq_prompt = cond_prompts[sequence_index].squeeze(0)
-                padding = result.shape[1] - len(seq_prompt)
+                    frame_time = frame_times[sequence_index].item()
 
-                # Get the range within the current frame with lookback and lookahead removed
-                window_start_t = frame_time + self.lookback_time if trim_lookback else frame_time
-                window_end_t = frame_time + self.lookahead_max_time if trim_lookahead else frame_time + self.miliseconds_per_sequence
-                s2, e2 = self._get_events_time_range(event_times, window_start_t, window_end_t)
+                    # Get relevant tokens for current frame
+                    s, e = self._get_events_time_range(context["event_times"], frame_time, frame_time + self.miliseconds_per_sequence)
+                    events, event_times = context["events"][s:e], context["event_times"][s:e]
+                    tokens = self._encode(events, frame_time).squeeze(0)
+                    seq_prompt = cond_prompts[sequence_index].squeeze(0)
+                    padding = result.shape[0] - len(seq_prompt)
 
-                # Find the tokens in predicted_tokens[i] between context sos and eos
-                if self.add_out_context_types:
-                    start, end = self._get_token_context(
-                        seq_prompt,
-                        self.tokenizer.context_sos[context["context_type"]],
-                        self.tokenizer.context_eos[context["context_type"]],
-                    )
-                else:
-                    start, end = self._get_token_context(seq_prompt, self.tokenizer.sos_id, self.tokenizer.eos_id)
+                    # Get the range within the current frame with lookback and lookahead removed
+                    window_start_t = frame_time + self.lookback_time if trim_lookback else frame_time
+                    window_end_t = frame_time + self.lookahead_max_time if trim_lookahead else frame_time + self.miliseconds_per_sequence
+                    s2, e2 = self._get_events_time_range(event_times, window_start_t, window_end_t)
 
-                # Shift start and end because we want to get the logits for the event instead of the next event
-                logits = result[sequence_index, start + padding - 1:end + padding - 1]
-                assert len(logits) == len(events), f"Logits length {len(logits)} does not match events length {len(events)} for context {context['context_type']} at frame {sequence_index}."
+                    # Find the tokens in predicted_tokens[i] between context sos and eos
+                    if self.add_out_context_types:
+                        start, end = self._get_token_context(
+                            seq_prompt,
+                            self.tokenizer.context_sos[context["context_type"]],
+                            self.tokenizer.context_eos[context["context_type"]],
+                        )
+                    else:
+                        start, end = self._get_token_context(seq_prompt, self.tokenizer.sos_id, self.tokenizer.eos_id)
 
-                # Cut the tokens and logits to the generation window
-                tokens = tokens[s2:e2]
-                logits = logits[s2:e2]
+                    # Shift start and end because we want to get the logits for the event instead of the next event
+                    logits = result[start + padding - 1:end + padding - 1]
+                    assert len(logits) == len(events), f"Logits length {len(logits)} does not match events length {len(events)} for context {context['context_type']} at frame {sequence_index}."
 
-                # Calculate surprisal and relative surprisal
-                probs = logits.softmax(dim=-1)
-                entropy = -torch.sum(probs * torch.log2(probs + 1e-10), dim=-1)
-                surprisal = -torch.log2(probs[torch.arange(len(tokens)), tokens] + 1e-10)
-                relative_surprisal = torch.where(entropy > 0, surprisal / entropy, torch.zeros_like(entropy))
+                    # Cut the tokens and logits to the generation window
+                    tokens = tokens[s2:e2]
+                    logits = logits[s2:e2]
 
-                # Get the most likely token as a suggestion for a fix
-                suggested_tokens = logits.argmax(dim=-1)
-                suggested_events = self._decode(suggested_tokens, frame_time, True)
+                    # Calculate surprisal and relative surprisal
+                    probs = logits.softmax(dim=-1)
+                    entropy = -torch.sum(probs * torch.log2(probs + 1e-10), dim=-1)
+                    surprisal = -torch.log2(probs[torch.arange(len(tokens)), tokens] + 1e-10)
+                    relative_surprisal = torch.where(entropy > 0, surprisal / entropy, torch.zeros_like(entropy))
 
-                context['surprisals'][s:e][s2:e2] = relative_surprisal
-                context['expected_events'][s:e][s2:e2] = suggested_events
+                    # Get the most likely token as a suggestion for a fix
+                    suggested_tokens = logits.argmax(dim=-1)
+                    suggested_events = self._decode(suggested_tokens, frame_time, True)
 
-            # Post-process events
-            def process_event(event: Event) -> Any:
-                offset = self.position_precision // 2 if self.position_precision > 1 else 0
-                # Rescale position events
-                if event.type == EventType.POS_X or event.type == EventType.POS_Y:
-                    return f"{event.type.value[4]}:{event.value * self.position_precision}"
-                elif event.type == EventType.POS:
-                    return f"x:{((event.value % self.x_count) + self.x_min) * self.position_precision + offset} y:{((event.value // self.x_count) + self.y_min) * self.position_precision + offset}"
-                # Convert distance events to string
-                elif event.type == EventType.DISTANCE:
-                    return f"{event.value}"
-                # Convert mania column to string
-                elif event.type == EventType.MANIA_COLUMN:
-                    return f"{event.value + 1}"
-                # Convert volume to string
-                elif event.type == EventType.VOLUME:
-                    return f"{event.value}%"
-                # Convert snapping events to string
-                elif event.type == EventType.SNAPPING:
-                    return f"1/{event.value}" if event.value > 0 else "none"
-                # Convert time shift events to string mm:ss:fff
-                elif event.type == EventType.TIME_SHIFT:
-                    timestamp = f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
-                    return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
-                # Convert SV events to string
-                elif event.type == EventType.SCROLL_SPEED:
-                    return f"x{(event.value / 100):.2f}"
-                # Convert hitsound events to string
-                elif event.type == EventType.HITSOUND:
-                    hitsound_map = ["whistle", "finish", "clap"]
-                    hitsounds = [hitsound_map[i] for i in range(3) if (event.value >> i) & 1]
-                    sampleset_map = ["normal", "soft", "drum"]
-                    sampleset = ((event.value // 8) % 3)
-                    additions = ((event.value // 24) % 3)
-                    return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}-{':'.join(hitsounds) if hitsounds else 'none'}"
-                # Convert EOS control events to string
-                elif event.type == EventType.CONTROL and event.value in [self.tokenizer.eos_id] + list(self.tokenizer.context_eos.values()):
-                    return f"End of sequence"
-                else:
-                    return event
+                    context['surprisals'][s:e][s2:e2] = relative_surprisal
+                    context['expected_events'][s:e][s2:e2] = suggested_events
 
-            for i, event in enumerate(context['events']):
-                context['events_str'][i] = process_event(event)
-            for i, event in enumerate(context['expected_events']):
-                context['expected_events_str'][i] = process_event(event)
+                    # Post-process events
+                    def process_event(event: Event) -> Any:
+                        offset = self.position_precision // 2 if self.position_precision > 1 else 0
+                        # Rescale position events
+                        if event.type == EventType.POS_X or event.type == EventType.POS_Y:
+                            return f"{event.type.value[4]}:{event.value * self.position_precision}"
+                        elif event.type == EventType.POS:
+                            return f"x:{((event.value % self.x_count) + self.x_min) * self.position_precision + offset} y:{((event.value // self.x_count) + self.y_min) * self.position_precision + offset}"
+                        # Convert distance events to string
+                        elif event.type == EventType.DISTANCE:
+                            return f"{event.value}"
+                        # Convert mania column to string
+                        elif event.type == EventType.MANIA_COLUMN:
+                            return f"{event.value + 1}"
+                        # Convert volume to string
+                        elif event.type == EventType.VOLUME:
+                            return f"{event.value}%"
+                        # Convert snapping events to string
+                        elif event.type == EventType.SNAPPING:
+                            return f"1/{event.value}" if event.value > 0 else "none"
+                        # Convert time shift events to string mm:ss:fff
+                        elif event.type == EventType.TIME_SHIFT:
+                            timestamp = f"{event.value // 60000:02}:{(event.value // 1000) % 60:02}:{event.value % 1000:03}"
+                            return f"[link=osu://edit/{timestamp}]{timestamp}[/link]"
+                        # Convert SV events to string
+                        elif event.type == EventType.SCROLL_SPEED:
+                            return f"x{(event.value / 100):.2f}"
+                        # Convert hitsound events to string
+                        elif event.type == EventType.HITSOUND:
+                            hitsound_map = ["whistle", "finish", "clap"]
+                            hitsounds = [hitsound_map[i] for i in range(3) if (event.value >> i) & 1]
+                            sampleset_map = ["normal", "soft", "drum"]
+                            sampleset = ((event.value // 8) % 3)
+                            additions = ((event.value // 24) % 3)
+                            return f"{sampleset_map[sampleset]}:{sampleset_map[additions]}-{':'.join(hitsounds) if hitsounds else 'none'}"
+                        # Convert EOS control events to string
+                        elif event.type == EventType.CONTROL and event.value in [self.tokenizer.eos_id] + list(self.tokenizer.context_eos.values()):
+                            return f"End of sequence"
+                        else:
+                            return event
+
+                    for i, event in enumerate(context['events'][s:e][s2:e2]):
+                        context['events_str'][s:e][s2:e2][i] = process_event(event)
+                    for i, event in enumerate(context['expected_events'][s:e][s2:e2]):
+                        context['expected_events_str'][s:e][s2:e2][i] = process_event(event)
+
+                sequence_index += 1
 
         return out_context_data
 
@@ -679,6 +686,7 @@ class Processor(object):
             frames: torch.Tensor,
             model_kwargses: list[dict[str, torch.Tensor]],
             verbose: bool = True,
+            generator: bool = False,
     ):
         cond_prompt, uncond_prompt, max_len = self.stack_prompts(cond_prompts, uncond_prompts)
 
@@ -700,7 +708,7 @@ class Processor(object):
                                   model_kwarg_keys}
 
             # Start generation
-            results.append(genereate_func(
+            result = genereate_func(
                 model_kwargs_batch | dict(
                     inputs=frames_batch,
                     decoder_input_ids=cond_prompt_batch,
@@ -709,14 +717,20 @@ class Processor(object):
                     negative_prompt_attention_mask=uncond_prompt_batch.ne(
                         self.tokenizer.pad_id) if uncond_prompt_batch is not None else None,
                 ),
-            ))
+            )
+
+            if generator:
+                yield result
+            else:
+                results.append(result)
 
         torch.cuda.empty_cache()
 
-        # Concatenate all batch results to form the final result
-        padded_results, _ = self.pad_prompts(results)
-        result = torch.cat(padded_results, dim=0)
-        return result
+        if not generator:
+            # Concatenate all batch results to form the final result
+            padded_results, _ = self.pad_prompts(results)
+            result = torch.cat(padded_results, dim=0)
+            return result
 
     def _get_token_context(self, tokens: torch.Tensor, sos, eos):
         """Get the start and end indices of the token context in the given tokens."""
