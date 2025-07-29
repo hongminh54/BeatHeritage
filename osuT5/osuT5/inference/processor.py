@@ -711,6 +711,8 @@ class Processor(object):
                 ),
             ))
 
+        torch.cuda.empty_cache()
+
         # Concatenate all batch results to form the final result
         padded_results, _ = self.pad_prompts(results)
         result = torch.cat(padded_results, dim=0)
