@@ -395,20 +395,23 @@ class Processor(object):
             verbose,
         )
 
-        for i in range(len(result)):
-            frame_time = frame_times[i].item()
-            if self.add_out_context_types:
-                for context in out_context:
-                    # Find the tokens in predicted_tokens[i] between context sos and eos
-                    start, end = self._get_token_context(
-                        result[i],
-                        self.tokenizer.context_sos[context["context_type"]],
-                        self.tokenizer.context_eos[context["context_type"]],
-                    )
-                    self.add_predicted_tokens_to_context(context, result[i, start:end], frame_time)
-            else:
-                start, end = self._get_token_context(result[i], self.tokenizer.sos_id, self.tokenizer.eos_id)
-                self.add_predicted_tokens_to_context(out_context[0], result[i, start:end], frame_time)
+        sequence_index = 0
+        for batch in result:
+            for sequence in batch:
+                frame_time = frame_times[sequence_index].item()
+                if self.add_out_context_types:
+                    for context in out_context:
+                        # Find the tokens in predicted_tokens[i] between context sos and eos
+                        start, end = self._get_token_context(
+                            sequence,
+                            self.tokenizer.context_sos[context["context_type"]],
+                            self.tokenizer.context_eos[context["context_type"]],
+                        )
+                        self.add_predicted_tokens_to_context(context, sequence[start:end], frame_time)
+                else:
+                    start, end = self._get_token_context(sequence, self.tokenizer.sos_id, self.tokenizer.eos_id)
+                    self.add_predicted_tokens_to_context(out_context[0], sequence[start:end], frame_time)
+                sequence_index += 1
 
     def ai_mod(
             self,
@@ -686,7 +689,6 @@ class Processor(object):
             frames: torch.Tensor,
             model_kwargses: list[dict[str, torch.Tensor]],
             verbose: bool = True,
-            generator: bool = False,
     ):
         cond_prompt, uncond_prompt, max_len = self.stack_prompts(cond_prompts, uncond_prompts)
 
@@ -694,7 +696,6 @@ class Processor(object):
         max_batch_size = max(1, self.max_batch_size // self.num_beams // (2 if self.cfg_scale > 1 else 1))
         num_samples = cond_prompt.size(0)
         model_kwarg_keys = list(model_kwargses[0].keys())
-        results = []
 
         # Process each batch
         iterator = tqdm(list(range(0, num_samples, max_batch_size))) if verbose else range(0, num_samples,
@@ -719,18 +720,9 @@ class Processor(object):
                 ),
             )
 
-            if generator:
-                yield result
-            else:
-                results.append(result)
+            yield result
 
         torch.cuda.empty_cache()
-
-        if not generator:
-            # Concatenate all batch results to form the final result
-            padded_results, _ = self.pad_prompts(results)
-            result = torch.cat(padded_results, dim=0)
-            return result
 
     def _get_token_context(self, tokens: torch.Tensor, sos, eos):
         """Get the start and end indices of the token context in the given tokens."""
