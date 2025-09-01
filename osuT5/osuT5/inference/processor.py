@@ -468,7 +468,6 @@ class Processor(object):
             frames,
             model_kwargses,
             verbose=verbose,
-            generator=True,
         )
 
         sequence_index = 0
