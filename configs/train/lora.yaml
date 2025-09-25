@@ -27,6 +27,7 @@ optim:                  # Optimizer settings
   total_steps: 1000
   warmup_steps: 0
   sustain_steps: 0      # Steps to sustain the learning rate after warmup
+  weight_decay: 0.01
   lr_scheduler: cosine
   final_cosine: 0
 
