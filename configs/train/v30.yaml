@@ -54,23 +54,37 @@ data:                  # Data settings
   add_positions: true
   position_precision: 4 # Precision of hit object coordinates
   position_split_axes: true  # Split hit object X and Y coordinates into separate tokens
-  dt_augment_prob: 0.5   # Probability of augmenting the dataset with DT
-  dt_augment_range: [1.25, 1.5]  # Range of DT augmentation
+  dt_augment_prob: 0.3   # Probability of augmenting the dataset with DT
+  dt_augment_range: [1., 1.2]  # Range of DT augmentation
   types_first: false       # Put the type token at the start of the group before the timeshift token
   add_kiai: false        # Model kiai times
   gamemodes: [0]  # List of gamemodes to include in the dataset
   mania_bpm_normalized_scroll_speed: true  # Normalize mania scroll speed by BPM
   add_sv: false  # Model slider velocity in std and ctb
   add_mania_sv: false  # Add mania scroll velocity in map context
+  frame_offset_augment_prob: 0.5  # Probability of augmenting the dataset with frame offset
+  min_difficulty: 1     # Minimum difficulty to consider including in the dataset
+  max_difficulty: 10    # Maximum difficulty to consider including in the dataset
+  cycle_length: 1
+  label_smoothing: 0.1  # Label smoothing for the loss calculation
+  lookback: 0.2             # Fraction of audio sequence to fill with tokens from previous inference window
+  lookback_prob: 0.5  # Probability of using the lookback augmentation for a beatmap in the dataset
+  mapper_dropout_prob: 0.1
 
 dataloader:             # Dataloader settings
   num_workers: 4
+  drop_last: true
 
 optim:                  # Optimizer settings
   name: muon
-  base_lr: 4e-3         # Should not be scaled with the number of devices present
+  base_lr: 0.004         # Should be scaled with the number of devices present
+  base_lr_2: 0.001        # Secondary learning rate for the internal optimizer
   batch_size: 64
-  grad_acc: 1
-  total_steps: 65536
+  grad_acc: 4
+  total_steps: 50000
   warmup_steps: 0
+  sustain_steps: 10000      # Steps to sustain the learning rate after warmup
+  weight_decay: 0.01
+  lr_scheduler: linear
+  final_cosine: 0
 
