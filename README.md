@@ -272,20 +272,61 @@ Create your own dataset using the [Mapperator console app](https://github.com/ma
 Mapperator.ConsoleApp.exe dataset2 -t "/Mapperatorinator/datasets/beatmap_descriptors.csv" -i "path/to/osz/files" -o "/datasets/cool_dataset"
 ```
 
-### 3. Create docker container
+### 3. (Optional) Set-up Weight & Biases for logging
+Create an account on [Weight & Biases](https://wandb.ai/site) and get your API key from your account settings.
+Then set the `WANDB_API_KEY` environment variable, so the training process knows to log to this key.
+
+### 4. Create docker container
 Training in your venv is also possible, but we recommend using Docker on WSL for better performance.
 ```sh
 docker compose up -d --force-recreate
 docker attach mapperatorinator_space
+cd Mapperatorinator
 ```
 
-### 4. Configure parameters and begin training
+### 5. Configure parameters and begin training
 
-All configurations are located in `./configs/osut5/train.yaml`. Begin training by calling `osuT5/train.py`.
+All configurations are located in `./configs/train/default.yaml`. 
+Make sure to set the correct `train_dataset_path` and `test_dataset_path` to your dataset, as well as the start and end mapset indices for train/test split.
+The path is local to the docker container, so if you placed your dataset called `cool_dataset` into the `datasets` directory, then it should be `/workspace/datasets/cool_dataset`.
+
+I recommend making a custom config file that overrides the default config, so you have a record of your training config for reproducibility.
+
+```yaml
+data:
+  train_dataset_path: "/workspace/datasets/cool_dataset"
+  test_dataset_path: "/workspace/datasets/cool_dataset"
+  train_dataset_start: 0
+  train_dataset_end: 90
+  test_dataset_start: 90
+  test_dataset_end: 100
+```
+
+Begin training by calling `python osuT5/train.py` or `torchrun --nproc_per_node=NUM_GPUS osuT5/train.py` for multi-GPU training.
+
 
 ```sh
 python osuT5/train.py -cn train_v29 train_dataset_path="/workspace/datasets/cool_dataset" test_dataset_path="/workspace/datasets/cool_dataset" train_dataset_end=90 test_dataset_start=90 test_dataset_end=100
 ```
+
+### 6. LoRA fine-tuning
+
+You can also fine-tune a pre-trained model with [LoRA](https://arxiv.org/abs/2106.09685) to adapt it to a specific style or gamemode.
+To do this, adapt `configs/train/lora.yaml` to your needs and run the `lora` training config:
+
+```sh
+python osuT5/train.py -cn lora train_dataset_path="/workspace/datasets/cool_dataset" test_dataset_path="/workspace/datasets/cool_dataset" train_dataset_end=90 test_dataset_start=90 test_dataset_end=100
+```
+
+Important LoRA parameters to consider:
+- `pretrained_path`: Path or HF repo of the base model to fine-tune.
+- `r`: Rank of the LoRA matrices. Higher values increase model capacity but also memory usage.
+- `lora_alpha`: Scaling factor for the LoRA updates.
+- `total_steps`: Total number of training steps. Balance this according to your dataset size.
+- `enable_lora`: Whether to use LoRA or full model fine-tuning.
+
+During inference, you can specify the LoRA weights to use with the `lora_path` argument.
+This can be a local path or a Hugging Face repo.
 
 ## See also
 - [Mapper Classifier](./classifier/README.md)
