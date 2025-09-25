@@ -1,0 +1,66 @@
+defaults:
+  - default
+  - ../train@train: beatheritage_v1
+  - ../diffusion@diffusion: v1
+  - _self_
+
+model_path: 'hongminh54/BeatHeritage-v1'  # Path to BeatHeritage V1 model
+diff_ckpt: 'hongminh54/osu-diffusion-v2'   # Updated diffusion checkpoint
+version: 'BeatHeritage V1'                 # Beatmap version identifier
+
+# Context configuration - Enhanced from V30
+in_context: []
+output_type: [MAP]    # Output type (map, timing)
+
+# Improved sampling parameters for better stability
+temperature: 0.85        # Slightly lower for more stable generation (was 0.9)
+top_p: 0.92              # Slightly higher for better diversity (was 0.9)
+top_k: 50                # Added top-k sampling for better control
+repetition_penalty: 1.1  # Added to reduce repetitive patterns
+
+# Position generation with enhanced control
+generate_positions: true  # Enabled by default for better results
+position_refinement: true # New: Enable position refinement step
+
+# Enhanced diffusion timesteps for better quality
+timesteps: [10,8,6,4,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+
+# New features for BeatHeritage V1
+advanced_features:
+  enable_context_aware_generation: true    # Better context understanding
+  enable_style_preservation: true          # Preserve mapping style consistency
+  enable_difficulty_scaling: true          # Better difficulty progression
+  enable_pattern_variety: true             # More diverse pattern generation
+  
+# Quality control parameters (new)
+quality_control:
+  min_distance_threshold: 20               # Minimum distance between objects
+  max_overlap_ratio: 0.15                  # Maximum allowed overlap
+  enable_auto_correction: true             # Auto-correct spacing issues
+  enable_flow_optimization: true           # Optimize flow patterns
+  
+# Performance optimizations (new)
+performance:
+  use_flash_attention: false               # Enable if supported
+  batch_size: 1                            # Inference batch size
+  max_sequence_length: 5120                # Maximum sequence length
+  cache_size: 4096                         # Context cache size
+  
+# Metadata handling (enhanced)
+metadata:
+  preserve_timing_points: true             # Keep original timing points when possible
+  preserve_bookmarks: true                 # Keep bookmarks
+  auto_detect_kiai: true                  # Auto-detect kiai sections
+  smart_hitsounding: true                  # Enhanced hitsound generation
+
+# Postprocessor configuration (BeatHeritage V1 specific)
+postprocessor:
+  use_custom: true                         # Use BeatHeritagePostprocessor
+  class_name: 'beatheritage_postprocessor.BeatHeritagePostprocessor'
+  config_class: 'beatheritage_postprocessor.BeatHeritageConfig'
+  
+# Integration with other components
+integrations:
+  mai_mod_enhanced: true                   # Use enhanced MaiMod for BeatHeritage V1
+  fid_evaluation: true                     # Enable FID evaluation
+  benchmark_mode: false                    # Enable benchmark comparisons

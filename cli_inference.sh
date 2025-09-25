@@ -277,6 +277,34 @@ beatmap_path=$(convert_path_if_needed "$beatmap_path")
 # 3. Basic Settings
 print_header "Basic Settings"
 
+# Model Selection
+model_options=(
+    "v28:Mapperatorinator V28"
+    "v29:Mapperatorinator V29 (Supports gamemodes and descriptors)"
+    "v30:Mapperatorinator V30 (Best stable model)"
+    "v31:Mapperatorinator V31 (Slightly more accurate than V29)"
+    "beatheritage_v1:BeatHeritage V1 (Enhanced stability & quality)"
+)
+
+print_color $GREEN "Select Model:"
+for i in "${!model_options[@]}"; do
+    IFS=':' read -r value desc <<< "${model_options[i]}"
+    echo "  $((i+1))) $desc"
+done
+
+while true; do
+    read -p "Select model (1-${#model_options[@]}) [default: 5 - BeatHeritage V1]: " model_choice
+    model_choice=${model_choice:-5}
+    
+    if [[ "$model_choice" =~ ^[1-5]$ ]]; then
+        IFS=':' read -r model_config model_desc <<< "${model_options[$((model_choice-1))]}"
+        print_color $BLUE "Selected: $model_desc"
+        break
+    else
+        print_color $RED "Invalid choice. Please select 1-${#model_options[@]}."
+    fi
+done
+
 # Game Mode (MODIFIED BLOCK)
 gamemode_options=("osu!" "Taiko" "Catch" "Mania")
 while true; do
@@ -362,7 +390,7 @@ fi
 print_header "Command Generation"
 
 # Start building the command
-cmd_args=("$python_executable" "inference.py") 
+cmd_args=("$python_executable" "inference.py" "-cn" "$model_config") 
 
 # Helper function to add argument. Wraps value in single quotes.
 add_arg() {

@@ -1,0 +1,122 @@
+defaults:
+  - default
+  - ../model@model: whisper_small_v2  # Using same base model as v30
+  - _self_
+
+# Enhanced compilation and optimization settings
+compile: true              # PyTorch 2.0 optimization
+precision: 'bf16'          # Bfloat16 for better stability
+flash_attention: true      # Enable Flash Attention for better performance
+gradient_checkpointing: true  # New: Save memory during training
+
+data:                      # Enhanced data settings
+  dataset_type: "ors"
+  train_dataset_path: ""
+  test_dataset_path: ""
+  train_dataset_start: 0
+  train_dataset_end: 40000     # Expanded dataset (was 38689)
+  test_dataset_start: 40000
+  test_dataset_end: 41000      # Larger test set (was 39389)
+  num_classes: 152680
+  
+  # Enhanced Special Prefix Tokens
+  add_out_context_types: true   # Enhanced context awareness
+  add_gamemode_token: true      # Better gamemode handling
+  add_style_token: true          # Style preservation
+  add_diff_token: true           # Difficulty awareness
+  add_mapper_token: true         # Mapper style learning
+  add_year_token: true           # Temporal awareness
+  add_hitsounded_token: true    # Hitsound awareness
+  add_song_length_token: true   # Song length consideration
+  add_global_sv_token: true     # Global SV handling
+  add_cs_token: true             # Circle size awareness
+  add_keycount_token: true      # Mania key count
+  add_hold_note_ratio_token: true     # Mania hold notes
+  add_scroll_speed_ratio_token: true  # Mania scroll speed
+  add_descriptors: true          # Enable beatmap descriptors
+  add_sv_special_token: true    # SV value tracking
+  add_kiai_special_token: true  # Kiai state tracking
+  add_song_position_token: true # Song position awareness
+  
+  # Enhanced timing and positioning
+  timing_random_offset: 3       # Better timing variation (was 2)
+  src_seq_len: 4096
+  tgt_seq_len: 5120
+  rhythm_weight: 1.2            # Higher rhythm importance (was 1.0)
+  
+  # Enhanced context configuration
+  context_types:
+    - "in": []
+      "out": ['${context_type:map}']
+    - "in": ['${context_type:timing}']  # New: timing context
+      "out": ['${context_type:map}']
+    - "in": ['${context_type:map}']     # New: map-to-map learning
+      "out": ['${context_type:map}']
+  context_weights: [4, 2, 1]    # Weighted sampling
+  
+  mappers_path: "./datasets/beatmap_users.json"
+  add_timing: true
+  add_snapping: true
+  add_timing_points: true       # Enable timing points (was false)
+  add_hitsounds: true
+  add_pre_tokens: true           # Enable pre-tokens (was false)
+  per_track: true
+  add_distances: true
+  add_positions: true
+  position_precision: 5          # Higher precision (was 4)
+  position_split_axes: true
+  dt_augment_prob: 0.6           # More augmentation (was 0.5)
+  dt_augment_range: [1.1, 1.6]  # Wider range (was [1.25, 1.5])
+  types_first: false
+  add_kiai: true                 # Enable kiai modeling (was false)
+  gamemodes: [0, 1, 2, 3]        # All gamemodes (was [0])
+  mania_bpm_normalized_scroll_speed: true
+  add_sv: true                   # Enable SV modeling (was false)
+  add_mania_sv: true             # Enable mania SV (was false)
+  
+  # New data augmentation features
+  augmentation:
+    enable_rotation: true        # Rotate patterns
+    enable_flip: true           # Flip patterns
+    enable_scale: true          # Scale patterns
+    noise_level: 0.05           # Add small noise for robustness
+
+dataloader:                     # Enhanced dataloader settings
+  num_workers: 8                # More workers (was 4)
+  pin_memory: true              # New: Pin memory for faster transfer
+  prefetch_factor: 2            # New: Prefetch batches
+
+optim:                          # Enhanced optimizer settings
+  name: muon                    # Keep muon optimizer
+  base_lr: 3e-3                 # Slightly lower LR (was 4e-3)
+  batch_size: 48                # Smaller batch for stability (was 64)
+  grad_acc: 2                   # Gradient accumulation (was 1)
+  total_steps: 80000            # More training steps (was 65536)
+  warmup_steps: 2000            # Add warmup (was 0)
+  
+  # New optimizer features
+  weight_decay: 0.01            # L2 regularization
+  gradient_clip: 1.0            # Gradient clipping
+  ema_decay: 0.999              # Exponential moving average
+  
+# New training features
+training:
+  save_every: 1000              # Save checkpoint frequency
+  eval_every: 500               # Evaluation frequency
+  log_every: 100                # Logging frequency
+  mixed_precision: true         # Mixed precision training
+  find_unused_parameters: false # DDP optimization
+  
+# Loss configuration (new)
+loss:
+  use_focal_loss: true          # Better handling of imbalanced classes
+  focal_gamma: 2.0              # Focal loss gamma
+  label_smoothing: 0.1          # Label smoothing for robustness
+  
+# Evaluation metrics (new)
+metrics:
+  - accuracy
+  - perplexity
+  - rhythm_accuracy
+  - position_accuracy
+  - flow_quality

@@ -1,0 +1,40 @@
+# FID Evaluation Configuration for BeatHeritage V1
+# Fréchet Inception Distance for quality evaluation
+
+device: 'auto'  # Inference device (cpu/cuda/mps/auto)
+compile: true
+num_processes: 4  # Increased for better parallelization
+
+# Evaluation dataset
+dataset:
+  path: './datasets/eval'
+  num_samples: 1000
+  gamemodes: [0, 1, 2, 3]  # Evaluate all gamemodes
+
+# Model configurations to compare
+models:
+  reference: 'hongminh54/BeatHeritage-v1'
+  baseline: 'OliBomby/Mapperatorinator-v30'
+
+# Evaluation metrics
+metrics:
+  - fid_score  # Fréchet Inception Distance
+  - rhythm_accuracy
+  - position_accuracy
+  - pattern_diversity
+  - difficulty_consistency
+
+# Evaluation parameters
+eval_params:
+  batch_size: 16
+  num_inference_steps: 50
+  cfg_scale: 7.5
+  temperature: 0.85
+  top_p: 0.92
+
+# Output settings
+output:
+  save_results: true
+  results_dir: './evaluation/beatheritage_v1'
+  generate_report: true
+  visualize_metrics: true

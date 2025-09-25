@@ -1,9 +1,22 @@
-# Mapperatorinator
+# BeatHeritage
 
-Try the generative model [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mapperatorinator_inference.ipynb), or MaiMod [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mai_mod_inference.ipynb). Check out a video showcase [here](https://youtu.be/FEr7t1L2EoA).
+🎯 **NEW: BeatHeritage V1 - Enhanced Stability & Quality** | [Try on Colab](https://colab.research.google.com/github/hongminh54/BeatHeritage/blob/main/colab/beatheritage_v1_inference.ipynb) | [Documentation](docs/BEATHERITAGE_V1.md)
 
-Mapperatorinator is multi-model framework that uses spectrogram inputs to generate fully featured osu! beatmaps for all gamemodes and [assist modding beatmaps](#maimod-the-ai-driven-modding-tool).
+Try the generative model [here](https://colab.research.google.com/github/hongminh54/BeatHeritage/blob/main/colab/beatheritage_v1_inference.ipynb), or MaiMod [here](https://colab.research.google.com/github/OliBomby/Mapperatorinator/blob/main/colab/mai_mod_inference.ipynb). Check out a video showcase [here](https://youtu.be/FEr7t1L2EoA).
+
+BeatHeritage (formerly Mapperatorinator) is a multi-model framework that uses spectrogram inputs to generate fully featured osu! beatmaps for all gamemodes and [assist modding beatmaps](#maimod-the-ai-driven-modding-tool).
 The goal of this project is to automatically generate rankable quality osu! beatmaps from any song with a high degree of customizability.
+
+## 🚀 What's New in BeatHeritage V1
+
+- **Enhanced Stability**: Optimized sampling parameters (temperature 0.85, top_p 0.92) for more consistent generation
+- **Quality Control**: Automatic spacing correction, overlap detection, and flow optimization
+- **Pattern Variety**: Advanced pattern generation with diversity enhancement
+- **All Gamemodes**: Full support for std, taiko, ctb, and mania with mode-specific optimizations
+- **Performance**: Flash attention, mixed precision (BF16), and gradient checkpointing
+- **Custom Postprocessor**: Advanced post-processing with flow optimization and style preservation
+- **Benchmark Tools**: Compare performance with previous models
+- **Easy Setup**: Auto-setup script with model downloading from Hugging Face
 
 This project is built upon [osuT5](https://github.com/gyataro/osuT5) and [osu-diffusion](https://github.com/OliBomby/osu-diffusion). In developing this, I spent about 2500 hours of GPU compute across 142 runs on my 4060 Ti and rented 4090 instances on vast.ai.
 
