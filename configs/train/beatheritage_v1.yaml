@@ -115,8 +115,9 @@ loss:
   
 # Evaluation metrics (new)
 metrics:
-  - accuracy
-  - perplexity
-  - rhythm_accuracy
-  - position_accuracy
-  - flow_quality
+  metrics:
+    - accuracy
+    - perplexity
+    - rhythm_accuracy
+    - position_accuracy
+    - flow_quality

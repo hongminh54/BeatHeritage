@@ -61,7 +61,7 @@ class OptimizerConfig:  # Optimizer settings
     lr_scheduler: str = "cosine"
     weight_decay: float = 0.0
     grad_acc: int = 2
-    grad_clip: float = 1.0
+    gradient_clip: float = 1.0  # Changed from grad_clip for consistency
     final_cosine: float = 1e-5
 
 

@@ -1,0 +1,110 @@
+# Base training configuration
+# Provides default values for all training configurations
+
+# Device and compilation settings
+compile: false              # PyTorch 2.0 optimization (disabled by default)
+device: cpu                 # Training device (cpu/gpu) 
+precision: 'fp32'           # Precision (fp32/bf16/fp16)
+seed: 42                    # Global seed
+flash_attention: false      # Flash Attention (disabled by default)
+gradient_checkpointing: false # Gradient checkpointing for memory efficiency
+
+# Training paths
+checkpoint_path: ''         # Checkpoint path (empty by default)
+pretrained_path: ''         # Pretrained model path
+pretrained_t5_compat: false # T5 compatibility for pretrained models
+
+# Training mode and evaluation
+mode: 'train'               # Training mode
+eval: true                  # Enable evaluation
+profile: false              # Disable profiling by default
+
+# Model configuration (will be overridden by model-specific configs)
+model:
+  name: 'whisper_base'      # Default model name
+  vocab_size: 32000         # Default vocabulary size
+  hidden_size: 512          # Default hidden size
+  num_layers: 6             # Default number of layers
+  num_heads: 8              # Default number of attention heads
+
+# Data configuration defaults  
+data:
+  dataset_type: "ors"       # Default dataset type
+  train_dataset_path: ""    # Must be specified in child configs
+  test_dataset_path: ""     # Must be specified in child configs
+  train_dataset_start: 0    # Default start index
+  train_dataset_end: 1000   # Small default dataset
+  test_dataset_start: 1000  # Default test start
+  test_dataset_end: 1100    # Small default test set
+  num_classes: 50000        # Default number of classes
+  batch_size: 16            # Conservative default batch size
+  
+  # Token configuration defaults
+  add_out_context_types: false
+  add_gamemode_token: false
+  add_style_token: false
+  add_diff_token: false
+  add_mapper_token: false
+  add_year_token: false
+  add_hitsounded_token: false
+  add_song_length_token: false
+  add_global_sv_token: false
+  add_cs_token: false
+  add_keycount_token: false
+  
+  # Augmentation defaults
+  augmentation:
+    enable_rotation: false
+    enable_flip: false
+    enable_scale: false
+    noise_level: 0.0
+
+# Dataloader defaults
+dataloader:
+  num_workers: 2            # Conservative default
+  pin_memory: true          # Enable by default
+  drop_last: false          # Don't drop last batch by default
+  prefetch_factor: 2        # Default prefetch factor
+
+# Optimizer defaults
+optim:
+  name: adamw               # Default optimizer
+  base_lr: 1e-4             # Conservative learning rate
+  weight_decay: 0.01        # Light regularization
+  gradient_clip: 1.0        # Gradient clipping
+  grad_acc: 1               # No gradient accumulation by default
+  ema_decay: 0.999          # EMA decay rate
+
+# Training configuration defaults
+training:
+  save_every: 10000         # Save every 10k steps
+  eval_every: 5000          # Evaluate every 5k steps  
+  log_every: 100            # Log every 100 steps
+  mixed_precision: false    # Disable mixed precision by default
+  find_unused_parameters: false # Disable by default
+
+# Loss configuration defaults
+loss:
+  use_focal_loss: false     # Use standard cross-entropy by default
+  focal_gamma: 2.0          # Focal loss gamma
+  label_smoothing: 0.0      # No label smoothing by default
+
+# Metrics defaults
+metrics:
+  metrics: ['accuracy', 'perplexity'] # Default metrics
+
+# Logging defaults
+logging:
+  log_with: 'tensorboard'   # Default to tensorboard
+  every_steps: 100          # Log every 100 steps
+  mode: 'offline'           # Offline by default
+
+# Checkpoint defaults
+checkpoint:
+  every_steps: 10000        # Save every 10k steps
+  save_top_k: 3             # Keep top 3 checkpoints
+
+# Hydra defaults
+hydra:
+  job:
+    chdir: false            # Don't change directory by default

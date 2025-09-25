@@ -23,6 +23,14 @@ class SpectrogramConfig:
 
 
 @dataclass
+class AugmentationConfig:
+    enable_rotation: bool = False  # Rotate patterns
+    enable_flip: bool = False      # Flip patterns  
+    enable_scale: bool = False     # Scale patterns
+    noise_level: float = 0.0       # Add small noise for robustness
+
+
+@dataclass
 class ModelConfig:
     name: str = "openai/whisper-base"  # Model name
     config_base: str = ""  # Model base for config lookup
@@ -140,6 +148,7 @@ class DataConfig:
     frame_offset_augment_prob: float = 1.0  # Probability of augmenting beatmap sequences with frame offset
     normalize_audio: bool = True  # Normalize audio data
     slider_version: int = 1  # Slider version to use (1 or 2)
+    augmentation: AugmentationConfig = field(default_factory=AugmentationConfig)  # Data augmentation settings
 
 
 @dataclass
@@ -147,6 +156,7 @@ class DataloaderConfig:
     num_workers: int = 8
     pin_memory: bool = True
     drop_last: bool = False
+    prefetch_factor: int = 2  # Prefetch batches for faster data loading
 
 
 @dataclass
@@ -160,9 +170,10 @@ class OptimizerConfig:  # Optimizer settings
     sustain_steps: int = 0  # Steps to sustain the learning rate after warmup
     lr_scheduler: str = "cosine"
     weight_decay: float = 0.0
-    grad_clip: float = 1.0
+    gradient_clip: float = 1.0  # Gradient clipping (renamed from grad_clip)
     grad_acc: int = 8
     final_cosine: float = 1e-5
+    ema_decay: float = 0.999  # Exponential moving average decay
 
 
 @dataclass
@@ -186,6 +197,27 @@ class LoggingConfig:
 
 
 @dataclass
+class TrainingConfig:
+    save_every: int = 1000              # Save checkpoint frequency
+    eval_every: int = 500               # Evaluation frequency
+    log_every: int = 100                # Logging frequency
+    mixed_precision: bool = True        # Mixed precision training
+    find_unused_parameters: bool = False # DDP optimization
+
+
+@dataclass
+class LossConfig:
+    use_focal_loss: bool = False        # Better handling of imbalanced classes
+    focal_gamma: float = 2.0            # Focal loss gamma
+    label_smoothing: float = 0.0        # Label smoothing for robustness
+
+
+@dataclass
+class MetricsConfig:
+    metrics: list[str] = field(default_factory=lambda: ['accuracy', 'perplexity'])  # Evaluation metrics
+
+
+@dataclass
 class ProfileConfig:
     do_profile: bool = False
     early_stop: bool = False
@@ -202,6 +234,7 @@ class TrainConfig:
     precision: str = "bf16"
     seed: int = 42
     flash_attention: bool = False
+    gradient_checkpointing: bool = False
     checkpoint_path: str = ""
     pretrained_path: str = ""
     pretrained_t5_compat: bool = False
@@ -212,6 +245,9 @@ class TrainConfig:
     eval: EvalConfig = field(default_factory=EvalConfig)
     checkpoint: CheckpointConfig = field(default_factory=CheckpointConfig)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
+    training: TrainingConfig = field(default_factory=TrainingConfig)
+    loss: LossConfig = field(default_factory=LossConfig)
+    metrics: MetricsConfig = field(default_factory=MetricsConfig)
     profile: ProfileConfig = field(default_factory=ProfileConfig)
     hydra: Any = MISSING
     mode: str = "train"
@@ -220,4 +256,3 @@ class TrainConfig:
 OmegaConf.register_new_resolver("context_type", lambda x: ContextType(x.lower()))
 cs = ConfigStore.instance()
 cs.store(group="train", name="base", node=TrainConfig)
-

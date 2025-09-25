@@ -54,7 +54,7 @@ optim:                  # Optimizer settings
   lr_scheduler: cosine
   weight_decay: 0.0
   grad_acc: 2
-  grad_clip: 1.0
+  gradient_clip: 1.0  # Changed from grad_clip for consistency
   final_cosine: 1e-5
 
 checkpoint:             # Checkpoint settings

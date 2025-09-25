@@ -1,0 +1,146 @@
+# Base inference configuration  
+# Provides default values for all inference configurations
+
+# Paths (empty by default, must be specified in child configs)
+model_path: ''                    # Path to trained model
+audio_path: ''                    # Path to input audio  
+output_path: ''                   # Path to output directory
+beatmap_path: ''                  # Path to .osu file for metadata
+
+# Conditional generation settings (null = auto-detect/inherit)
+gamemode: null                    # Gamemode of the beatmap (0=std, 1=taiko, 2=ctb, 3=mania)
+beatmap_id: null                  # Beatmap ID to use as style reference
+difficulty: null                  # Difficulty star rating to target
+mapper_id: null                   # Mapper ID to use as style reference
+year: null                        # Year to use as style reference
+hitsounded: null                  # Whether the beatmap has hitsounds
+keycount: null                    # Number of keys for mania mode
+hold_note_ratio: null             # Ratio of hold notes in mania
+scroll_speed_ratio: null          # Ratio of scroll speed changes
+descriptors: null                 # List of style descriptors
+negative_descriptors: null        # List of descriptors to avoid
+
+# Difficulty settings (null = inherit from reference beatmap)
+hp_drain_rate: null               # HP drain rate (HP)
+circle_size: null                 # Circle size (CS)
+overall_difficulty: null          # Overall difficulty (OD)
+approach_rate: null               # Approach rate (AR)
+slider_multiplier: null           # Slider velocity multiplier
+slider_tick_rate: null            # Rate of slider ticks
+
+# Inference settings
+seed: null                        # Random seed (null = random)
+device: 'auto'                    # Inference device (cpu/cuda/mps/auto)
+precision: 'fp32'                 # Precision (fp32/bf16/amp)
+add_to_beatmap: false             # Add to existing beatmap
+export_osz: false                 # Export as .osz file
+start_time: null                  # Start time in milliseconds
+end_time: null                    # End time in milliseconds
+lookback: 0.5                     # Fraction of overlap with previous window
+lookahead: 0.4                    # Fraction to skip at end
+timing_leniency: 20               # Timing error tolerance (ms)
+
+# Context and output settings
+in_context: []                    # Context types (NONE, MAP, TIMING)
+output_type: [MAP]                # Output types to generate
+
+# Sampling parameters
+cfg_scale: 1.0                    # Classifier-free guidance scale
+temperature: 1.0                  # Sampling temperature
+timing_temperature: 0.1           # Temperature for timing generation
+mania_column_temperature: 0.5     # Temperature for mania columns
+taiko_hit_temperature: 0.5        # Temperature for taiko hit types
+timeshift_bias: 0.0               # Logit bias for timeshift tokens
+top_p: 0.95                       # Top-p sampling threshold
+top_k: 0                          # Top-k sampling (0 = disabled)
+repetition_penalty: 1.0           # Repetition penalty
+parallel: false                   # Use parallel sampling
+do_sample: true                   # Enable sampling
+num_beams: 1                      # Number of beams (1 = greedy)
+
+# Advanced generation settings
+super_timing: false               # Use super timing generator
+timer_num_beams: 2                # Beams for timer
+timer_bpm_threshold: 0.7          # BPM change threshold
+timer_cfg_scale: 1.0              # CFG scale for timer
+timer_iterations: 20              # Timer iterations
+use_server: true                  # Use optimized server
+max_batch_size: 16                # Maximum batch size
+resnap_events: true               # Resnap notes to timing
+position_refinement: false        # Use position refinement
+
+# Metadata settings
+bpm: 120                          # Beats per minute
+offset: 0                         # Beat start offset (ms)
+title: ''                         # Song title
+artist: ''                        # Song artist
+creator: ''                       # Beatmap creator
+version: ''                       # Beatmap version
+background: null                  # Background image filename
+preview_time: -1                  # Preview start time (ms)
+
+# Diffusion settings (for position generation)
+generate_positions: true          # Use diffusion for positions
+diff_cfg_scale: 1.0               # Diffusion CFG scale
+compile: false                    # PyTorch compilation
+pad_sequence: false               # Pad sequence to max length
+diff_ckpt: ''                     # Diffusion model checkpoint
+diff_refine_ckpt: ''              # Refinement model checkpoint
+beatmap_idx: 'osu_diffusion/beatmap_idx.pickle' # Beatmap index file
+refine_iters: 10                  # Refinement iterations
+random_init: false                # Random initialization
+timesteps: [100,0,0,0,0,0,0,0,0,0] # Diffusion timesteps
+max_seq_len: 1024                 # Maximum sequence length
+overlap_buffer: 128               # Overlap buffer size
+
+# BeatHeritage V1 sections (with conservative defaults)
+advanced_features:
+  enable_context_aware_generation: false
+  enable_style_preservation: false
+  enable_difficulty_scaling: false
+  enable_pattern_variety: false
+
+quality_control:
+  min_distance_threshold: 10
+  max_overlap_ratio: 0.3
+  enable_auto_correction: false
+  enable_flow_optimization: false
+
+performance:
+  use_flash_attention: false
+  batch_size: 1
+  max_sequence_length: 2048
+  cache_size: 1024
+
+metadata:
+  preserve_timing_points: false
+  preserve_bookmarks: false
+  auto_detect_kiai: false
+  smart_hitsounding: false
+
+postprocessor:
+  use_custom: false
+  class_name: ''
+  config_class: ''
+
+integrations:
+  mai_mod_enhanced: false
+  fid_evaluation: false
+  benchmark_mode: false
+
+# Training configuration (usually not used in inference but may be referenced)
+train:
+  device: cpu
+  precision: fp32
+  seed: 42
+
+# Diffusion training configuration (may be referenced)
+diffusion:
+  device: cpu
+  precision: fp32
+  seed: 42
+
+# Hydra settings
+hydra:
+  job:
+    chdir: false

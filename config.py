@@ -9,6 +9,49 @@ from osuT5.osuT5.tokenizer import ContextType
 from osu_diffusion.config import DiffusionTrainConfig
 
 
+# BeatHeritage V1 Config Sections
+
+@dataclass
+class AdvancedFeaturesConfig:
+    enable_context_aware_generation: bool = True
+    enable_style_preservation: bool = True
+    enable_difficulty_scaling: bool = True
+    enable_pattern_variety: bool = True
+
+@dataclass
+class QualityControlConfig:
+    min_distance_threshold: int = 20
+    max_overlap_ratio: float = 0.15
+    enable_auto_correction: bool = True
+    enable_flow_optimization: bool = True
+
+@dataclass
+class PerformanceConfig:
+    use_flash_attention: bool = False
+    batch_size: int = 1
+    max_sequence_length: int = 5120
+    cache_size: int = 4096
+
+@dataclass
+class MetadataConfig:
+    preserve_timing_points: bool = True
+    preserve_bookmarks: bool = True
+    auto_detect_kiai: bool = True
+    smart_hitsounding: bool = True
+
+@dataclass
+class PostprocessorConfig:
+    use_custom: bool = True
+    class_name: str = 'beatheritage_postprocessor.BeatHeritagePostprocessor'
+    config_class: str = 'beatheritage_postprocessor.BeatHeritageConfig'
+
+@dataclass
+class IntegrationsConfig:
+    mai_mod_enhanced: bool = True
+    fid_evaluation: bool = True
+    benchmark_mode: bool = False
+
+
 # Default config here based on V28
 
 @dataclass
@@ -60,6 +103,7 @@ class InferenceConfig:
     timeshift_bias: float = 0.0  # Logit bias for sampling timeshift tokens
     top_p: float = 0.95  # Top-p sampling threshold
     top_k: int = 0  # Top-k sampling threshold
+    repetition_penalty: float = 1.0  # Repetition penalty to reduce repetitive patterns
     parallel: bool = False  # Use parallel sampling
     do_sample: bool = True  # Use sampling
     num_beams: int = 1  # Number of beams for beam search
@@ -71,6 +115,7 @@ class InferenceConfig:
     use_server: bool = True  # Use server for optimized multiprocess inference
     max_batch_size: int = 16  # Maximum batch size for inference (only used for parallel sampling or super timing)
     resnap_events: bool = True  # Resnap notes to the timing after generation
+    position_refinement: bool = False  # Use position refinement
 
     # Metadata settings
     bpm: int = 120  # Beats per minute of input audio
@@ -99,6 +144,14 @@ class InferenceConfig:
     # Training settings
     train: TrainConfig = field(default_factory=TrainConfig)  # Training settings for osuT5 model
     diffusion: DiffusionTrainConfig = field(default_factory=DiffusionTrainConfig)  # Training settings for diffusion model
+
+    # BeatHeritage V1 Config Sections
+    advanced_features: AdvancedFeaturesConfig = field(default_factory=AdvancedFeaturesConfig)
+    quality_control: QualityControlConfig = field(default_factory=QualityControlConfig)
+    performance: PerformanceConfig = field(default_factory=PerformanceConfig)
+    metadata: MetadataConfig = field(default_factory=MetadataConfig)
+    postprocessor: PostprocessorConfig = field(default_factory=PostprocessorConfig)
+    integrations: IntegrationsConfig = field(default_factory=IntegrationsConfig)
     hydra: Any = MISSING
 
 

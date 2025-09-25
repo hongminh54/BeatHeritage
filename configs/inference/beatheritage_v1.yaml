@@ -4,9 +4,9 @@ defaults:
   - ../diffusion@diffusion: v1
   - _self_
 
-model_path: 'hongminh54/BeatHeritage-v1'  # Path to BeatHeritage V1 model
-diff_ckpt: 'hongminh54/osu-diffusion-v2'   # Updated diffusion checkpoint
-version: 'BeatHeritage V1'                 # Beatmap version identifier
+model_path: 'hongminh54/BeatHeritage-v1'  # Original BeatHeritage V1 model
+diff_ckpt: 'hongminh54/osu-diffusion-v2'   # Original diffusion checkpoint
+version: 'BeatHeritage V1'                 # Original version identifier
 
 # Context configuration - Enhanced from V30
 in_context: []

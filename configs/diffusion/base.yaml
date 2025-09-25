@@ -1,0 +1,77 @@
+# Base diffusion configuration
+# Provides default values for diffusion training and inference
+
+# Device and compilation settings
+compile: false
+device: cpu
+precision: 'fp32'
+seed: 42
+checkpoint_path: ''
+
+# Model configuration defaults
+model:
+  model: 'DiT-S'                    # Default to smaller model
+  noise_schedule: 'linear'          # Default noise schedule
+  l1_loss: false                    # Use MSE loss by default
+  diffusion_steps: 1000             # Standard diffusion steps
+  max_diffusion_step: 1000          # Full diffusion by default
+  context_size: 128                 # Default context size
+
+# Data configuration defaults
+data:
+  train_dataset_path: ''            # Must be specified in child configs
+  start: 0
+  end: 1000                         # Small default dataset
+  shuffle: true
+  seq_len: 64                       # Default sequence length
+  stride: 8                         # Default stride
+  cycle_length: 32                  # Default cycle length
+  beatmap_class: false              # Disable by default
+  difficulty_class: false           # Disable by default
+  mapper_class: false               # Disable by default
+  descriptor_class: false           # Disable by default
+  circle_size_class: false          # Disable by default
+  class_dropout_prob: 0.1           # Conservative dropout
+  diff_dropout_prob: 0.1
+  mapper_dropout_prob: 0.1
+  descriptor_dropout_prob: 0.1
+  cs_dropout_prob: 0.1
+  descriptors_path: ''              # Must be specified in child configs
+  mappers_path: ''                  # Must be specified in child configs
+  num_diff_classes: 10              # Default number of classes
+  max_diff: 10                      # Default max difficulty
+  num_cs_classes: 10                # Default number of CS classes
+  double_time_prob: 0.0             # Disable by default
+  distance_std: 0.05                # Conservative noise
+
+# Dataloader defaults
+dataloader:
+  num_workers: 2                    # Conservative default
+
+# Optimizer defaults
+optim:
+  name: adamw
+  base_lr: 1e-4                     # Conservative learning rate
+  batch_size: 32                    # Small default batch size
+  total_steps: 100000               # Default training steps
+  warmup_steps: 5000                # Default warmup
+  lr_scheduler: linear              # Simple scheduler
+  weight_decay: 0.01                # Light regularization
+  grad_acc: 1                       # No gradient accumulation by default
+  gradient_clip: 1.0                # Gradient clipping
+  final_cosine: 1e-6                # Final learning rate
+
+# Checkpoint defaults
+checkpoint:
+  every_steps: 10000                # Save every 10k steps
+
+# Logging defaults
+logging:
+  log_with: 'tensorboard'           # Default to tensorboard
+  every_steps: 100                  # Log every 100 steps
+  mode: 'offline'                   # Offline by default
+
+# Hydra defaults
+hydra:
+  job:
+    chdir: false                    # Don't change directory by default

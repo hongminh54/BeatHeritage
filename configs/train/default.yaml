@@ -122,7 +122,7 @@ optim:                  # Optimizer settings
   sustain_steps: 0      # Steps to sustain the learning rate after warmup
   lr_scheduler: cosine
   weight_decay: 0.0
-  grad_clip: 1.0
+  gradient_clip: 1.0  # Changed from grad_clip for consistency
   grad_acc: 3
   final_cosine: 1e-5
 
