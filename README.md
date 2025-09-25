@@ -276,6 +276,10 @@ Mapperator.ConsoleApp.exe dataset2 -t "/Mapperatorinator/datasets/beatmap_descri
 Create an account on [Weight & Biases](https://wandb.ai/site) and get your API key from your account settings.
 Then set the `WANDB_API_KEY` environment variable, so the training process knows to log to this key.
 
+```sh
+export WANDB_API_KEY=<your_api_key>
+```
+
 ### 4. Create docker container
 Training in your venv is also possible, but we recommend using Docker on WSL for better performance.
 ```sh
