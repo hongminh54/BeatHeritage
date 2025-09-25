@@ -44,7 +44,6 @@ def main(args: TrainConfig):
         "osuT5",
         init_kwargs={
             "wandb": {
-                "entity": "mappingtools",
                 "job_type": "training",
                 "sync_tensorboard": args.profile.do_profile,
                 "mode": args.logging.mode,
