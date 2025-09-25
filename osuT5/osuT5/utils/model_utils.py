@@ -1,5 +1,4 @@
 import multiprocessing
-import os
 import time
 from multiprocessing.managers import Namespace
 from pathlib import Path
@@ -112,14 +111,20 @@ def load_model_loaders(
         precision: str = "fp32",
         eval_mode: bool = True,
         pickle_module=None,
+        lora_path=None,
 ):
     if ckpt_path_str == "":
-        raise ValueError("Model path is empty.")
+        if eval_mode:
+            raise ValueError("Model path is empty.")
+        else:
+            print("No pretrained model path provided, training from scratch.")
 
     ckpt_path = Path(ckpt_path_str)
 
     def tokenizer_loader():
-        if not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
+        if ckpt_path_str == "":
+            tokenizer = get_tokenizer(t5_args)
+        elif not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
             tokenizer = Tokenizer.from_pretrained(ckpt_path_str)
         else:
             tokenizer_state = torch.load(ckpt_path / "custom_checkpoint_0.pkl", pickle_module=pickle_module, weights_only=False)
@@ -130,13 +135,31 @@ def load_model_loaders(
     tokenizer = tokenizer_loader()
 
     def model_loader():
-        if not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
+        if ckpt_path_str == "":
+            model = get_model(t5_args, tokenizer)
+        elif not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
             model = Mapperatorinator.from_pretrained(ckpt_path_str)
             model.generation_config.disable_compile = True
         else:
             model_state = torch.load(ckpt_path / "pytorch_model.bin", map_location=device, weights_only=True)
             model = get_model(t5_args, tokenizer)
-            model.load_state_dict(model_state)
+            if t5_args.pretrained_t5_compat:
+                del model_state["shared.weight"]
+                del model_state["encoder.embed_tokens.weight"]
+                del model_state["decoder.embed_tokens.weight"]
+                del model_state["lm_head.weight"]
+                model.transformer.load_state_dict(model_state, strict=False)
+            else:
+                model.load_state_dict(model_state)
+
+        if lora_path is not None:
+            try:
+                from peft import PeftModel
+            except ImportError:
+                raise ImportError("Please install the 'peft' library to use LoRA fine-tuning.")
+            model = PeftModel.from_pretrained(model, lora_path)
+            model = model.merge_and_unload()
+            print(f"Loaded LoRA weights from {lora_path}")
 
         if eval_mode:
             model.eval()
