@@ -8,14 +8,12 @@ from osuT5.utils import (
     setup_args,
     train,
     train_profiling,
-    get_model,
-    get_tokenizer,
+    load_model,
     get_scheduler,
     get_optimizer,
     get_dataloaders,
     get_shared_training_state,
 )
-
 
 
 def print_model_parameters(model):
@@ -56,10 +54,7 @@ def main(args: TrainConfig):
     setup_args(args)
 
     shared = get_shared_training_state()
-    tokenizer = get_tokenizer(args)
-    model = get_model(args, tokenizer)
-    optimizer = get_optimizer(model, args)
-    scheduler = get_scheduler(optimizer, args, accelerator)
+    model, tokenizer = load_model(args.pretrained_path, args, accelerator.device, eval_mode=False)
     train_dataloader, test_dataloader = get_dataloaders(tokenizer, args, shared)
 
     if args.pretrained_path:
@@ -72,6 +67,9 @@ def main(args: TrainConfig):
             model.transformer.load_state_dict(state_dict, strict=False)
         else:
             model.load_state_dict(state_dict)
+
+    optimizer = get_optimizer(model, args)
+    scheduler = get_scheduler(optimizer, args, accelerator)
 
     if args.model.manual_norm_weights:
         print("Manually normalizing model weights")

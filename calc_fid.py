@@ -18,7 +18,7 @@ from classifier.classify import ExampleDataset
 from classifier.libs.model.model import OsuClassifierOutput
 from classifier.libs.utils import load_ckpt
 from config import FidConfig
-from inference import prepare_args, load_diff_model, generate, load_model
+from inference import prepare_args, load_diff_model, generate, load_model_with_server
 from osuT5.osuT5.dataset.data_utils import load_audio_file, load_mmrs_metadata, filter_mmrs_metadata
 from osuT5.osuT5.inference import generation_config_from_beatmap, beatmap_config_from_beatmap
 from osuT5.osuT5.tokenizer import ContextType
@@ -198,7 +198,14 @@ def generate_beatmaps(beatmap_paths, fid_args: FidConfig, return_dict, idx):
     torch.set_float32_matmul_precision('high')
 
     model, tokenizer, diff_model, diff_tokenizer, refine_model = None, None, None, None, None
-    model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, args.use_server, args.precision)
+    model, tokenizer = load_model_with_server(
+        args.model_path,
+        args.train,
+        args.device,
+        max_batch_size=args.max_batch_size,
+        use_server=args.use_server,
+        precision=args.precision,
+    )
 
     if args.compile:
         model.transformer.forward = torch.compile(model.transformer.forward, mode="reduce-overhead", fullgraph=True)

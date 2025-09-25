@@ -23,7 +23,7 @@ from osuT5.osuT5.inference.server import InferenceClient
 from osuT5.osuT5.inference.super_timing_generator import SuperTimingGenerator
 from osuT5.osuT5.model import Mapperatorinator
 from osuT5.osuT5.tokenizer import Tokenizer, ContextType
-from osuT5.osuT5.utils import get_model
+from osuT5.osuT5.utils import load_model_loaders
 from osu_diffusion import DiT_models
 from osu_diffusion.config import DiffusionTrainConfig
 
@@ -446,57 +446,29 @@ def generate(
     return result, result_path, osz_path
 
 
-def load_model(
+def load_model_with_server(
         ckpt_path_str: str,
         t5_args: TrainConfig,
         device,
         max_batch_size: int = 8,
         use_server: bool = False,
         precision: str = "fp32",
+        eval_mode: bool = True,
 ):
-    if ckpt_path_str == "":
-        raise ValueError("Model path is empty.")
-
-    ckpt_path = Path(ckpt_path_str)
-
-    def tokenizer_loader():
-        if not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
-            tokenizer = Tokenizer.from_pretrained(ckpt_path_str)
-        else:
-            tokenizer_state = torch.load(ckpt_path / "custom_checkpoint_0.pkl", pickle_module=routed_pickle, weights_only=False)
-            tokenizer = Tokenizer()
-            tokenizer.load_state_dict(tokenizer_state)
-        return tokenizer
-
-    tokenizer = tokenizer_loader()
-
-    def model_loader():
-        if not (ckpt_path / "pytorch_model.bin").exists() or not (ckpt_path / "custom_checkpoint_0.pkl").exists():
-            model = Mapperatorinator.from_pretrained(ckpt_path_str)
-            model.generation_config.disable_compile = True
-        else:
-            model_state = torch.load(ckpt_path / "pytorch_model.bin", map_location=device, weights_only=True)
-            model = get_model(t5_args, tokenizer)
-            model.load_state_dict(model_state)
-
-        model.eval()
-        model.to(device)
-
-        if precision == "bf16":
-            # Cast every submodule to bfloat16 except for the spectrogram module
-            for name, module in model.named_modules():
-                if name != "" and "spectrogram" not in name:
-                    module.to(torch.bfloat16)
-
-        print(f"Model loaded: {ckpt_path_str} on device {device}")
-        return model
-
+    model_loader, tokenizer_loader = load_model_loaders(
+        ckpt_path_str=ckpt_path_str,
+        t5_args=t5_args,
+        device=device,
+        precision=precision,
+        eval_mode=eval_mode,
+        pickle_module=routed_pickle,
+    )
     return InferenceClient(
         model_loader,
         tokenizer_loader,
         max_batch_size=max_batch_size,
         socket_path=get_server_address(ckpt_path_str),
-    ) if use_server else model_loader(), tokenizer
+    ) if use_server else model_loader(), tokenizer_loader()
 
 
 def get_server_address(ckpt_path_str: str):
@@ -544,7 +516,14 @@ def load_diff_model(
 def main(args: InferenceConfig):
     prepare_args(args)
 
-    model, tokenizer = load_model(args.model_path, args.train, args.device, args.max_batch_size, args.use_server, args.precision)
+    model, tokenizer = load_model_with_server(
+        args.model_path,
+        args.train,
+        args.device,
+        max_batch_size=args.max_batch_size,
+        use_server=args.use_server,
+        precision=args.precision,
+    )
 
     diff_model, diff_tokenizer, refine_model = None, None, None
     if args.generate_positions:
