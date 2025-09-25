@@ -62,7 +62,6 @@ def main(args: TrainConfig):
         from peft import LoraConfig, get_peft_model
         lora_config = LoraConfig(**OmegaConf.to_object(args.lora))
         model = get_peft_model(model, lora_config)
-        # model.model.transformer.model.encoder.conv1.register_forward_hook(make_inputs_require_grad)
         lora_params = {n: p for n, p in model.named_parameters() if "lora" in n}
         for n, p in lora_params.items():
             print(n, p.sum())
