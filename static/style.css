@@ -402,6 +402,64 @@ button[type="submit"]:hover {
   margin-bottom: 10px;
 }
 
+/* --- Live Logs & Step Table --- */
+.card-subsection h4 {
+  margin: 10px 0 6px 0;
+}
+
+.log-container {
+  background: #191919;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 10px;
+}
+
+.log-content {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  color: #d8d8d8;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  border-radius: 4px;
+  padding: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+  white-space: pre-wrap; /* keep lines tidy */
+}
+
+.progress-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 6px;
+}
+
+.progress-table th,
+.progress-table td {
+  border: 1px solid var(--border-color);
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 13px;
+}
+
+.progress-table thead th {
+  background: #232323;
+}
+
+.progress-table tbody tr:nth-child(even) {
+  background: #1a1a1a;
+}
+
+/* Status badges */
+.progress-table td.status {
+  font-weight: 600;
+}
+
+.status-pending { color: #b0b0b0; }
+.status-running { color: #f0a500; }
+.status-done    { color: #27ae60; }
+.status-error   { color: var(--accent-color); }
+
 /* Animated Header & Footer */
 .animated-header, .animated-footer {
   animation: headerFadeIn 1s ease-out;

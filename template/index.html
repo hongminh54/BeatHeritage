@@ -315,6 +315,42 @@
             <div id="progressBarContainer">
                 <div id="progressBar"></div>
             </div>
+            <!-- Step Progress Table -->
+            <div id="progressTableContainer" class="card-subsection" style="margin-top:10px; display:none;">
+                <h4>Steps</h4>
+                <table id="progressTable" class="progress-table">
+                    <thead>
+                        <tr>
+                            <th>Step</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr data-step="timing"><td>Generating Timing</td><td class="status">Pending</td><td class="time">-</td></tr>
+                        <tr data-step="kiai"><td>Generating Kiai</td><td class="status">Pending</td><td class="time">-</td></tr>
+                        <tr data-step="map"><td>Generating Map</td><td class="status">Pending</td><td class="time">-</td></tr>
+                        <tr data-step="diffusion"><td>Refining Positions</td><td class="status">Pending</td><td class="time">-</td></tr>
+                        <tr data-step="export"><td>Export</td><td class="status">Pending</td><td class="time">-</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Live Logs (log-like progress) -->
+            <div id="logContainer" class="log-container" style="margin-top:10px; display:none;">
+                <div style="display:flex; align-items:center; justify-content:space-between;">
+                    <h4 style="margin:0;">Live Logs</h4>
+                    <div>
+                        <label style="font-size:12px; margin-right:8px;">
+                            <input type="checkbox" id="autoscrollToggle" checked /> Autoscroll
+                        </label>
+                        <button type="button" id="copyLogsBtn" class="browse-button">Copy</button>
+                        <button type="button" id="downloadLogsBtn" class="browse-button">Download</button>
+                        <button type="button" id="clearLogsBtn" class="browse-button">Clear</button>
+                    </div>
+                </div>
+                <pre id="logContent" class="log-content"></pre>
+            </div>
             <div style="margin-top: 10px; text-align: center;">
                 <button type="button" id="cancel-button" class="cancel-button" style="display:none;">Cancel</button>
             </div>

@@ -7,6 +7,12 @@ $(document).ready(function() {
         accumulatedErrorMessages: [],
         errorLogFilePath: null,
         animationSpeed: 300,
+        // Live log + step tracking
+        logs: [],
+        autoscroll: true,
+        startTime: null,
+        stepStartTimes: {},
+        stepStatus: { timing: 'Pending', kiai: 'Pending', map: 'Pending', diffusion: 'Pending', export: 'Pending' },
 
         modelCapabilities: {
             "v28": {},
@@ -690,6 +696,23 @@ $(document).ready(function() {
             AppState.accumulatedErrorMessages = [];
             AppState.isCancelled = false;
 
+            // Show and reset live log + steps
+            AppState.logs = [];
+            AppState.startTime = new Date();
+            AppState.stepStartTimes = {};
+            AppState.stepStatus = { timing: 'Pending', kiai: 'Pending', map: 'Pending', diffusion: 'Pending', export: 'Pending' };
+            $("#logContainer").show();
+            $("#progressTableContainer").show();
+            $("#logContent").text("");
+            $("#progressTable tbody tr").each(function() {
+                $(this).find('td.status').text('Pending').removeClass('status-running status-done status-error').addClass('status-pending');
+                $(this).find('td.time').text('-');
+            });
+            if (document.getElementById('autoscrollToggle')) {
+                $('#autoscrollToggle').prop('checked', true);
+                AppState.autoscroll = true;
+            }
+
             if (AppState.evtSource) {
                 AppState.evtSource.close();
                 AppState.evtSource = null;
@@ -772,6 +795,10 @@ $(document).ready(function() {
             if (AppState.isCancelled) return;
 
             const messageData = e.data;
+            // Always append to log view
+            this.appendLog(messageData);
+            // Update step table from log-like messages
+            this.updateStepsFromMessage(messageData);
             const errorIndicators = [
                 "Traceback (most recent call last):", "Error executing job with overrides:",
                 "FileNotFoundError:", "Exception:", "Set the environment variable HYDRA_FULL_ERROR=1"
@@ -834,8 +861,82 @@ $(document).ready(function() {
                                 .fail(() => alert("Failed to open folder via backend."));
                         });
                     $("#beatmapLink").show();
+                    // Mark export done when file is saved
+                    this.markStepDone('export');
                 }
             }
+        },
+
+        // --- Live log + step helpers ---
+        appendLog(message) {
+            AppState.logs.push(message);
+            const content = AppState.logs.join('\n');
+            const $el = $('#logContent');
+            $el.text(content);
+            if (AppState.autoscroll) {
+                const el = $el[0];
+                if (el) el.scrollTop = el.scrollHeight;
+            }
+        },
+
+        updateStepsFromMessage(message) {
+            const msg = message.toLowerCase();
+            const order = ['timing','kiai','map','diffusion'];
+            const detector = [
+                {key:'timing',     kw:['generating timing']},
+                {key:'kiai',       kw:['generating kiai']},
+                {key:'map',        kw:['generating map']},
+                {key:'diffusion',  kw:['seq len','refining positions']},
+            ];
+            for (const d of detector) {
+                if (d.kw.some(k => msg.includes(k))) {
+                    this.markStepRunning(d.key);
+                    // Mark previous step as done if still running
+                    const idx = order.indexOf(d.key);
+                    if (idx > 0) {
+                        const prev = order[idx - 1];
+                        if (AppState.stepStatus[prev] === 'Running') this.markStepDone(prev);
+                    }
+                }
+            }
+        },
+
+        markStepRunning(key) {
+            if (AppState.stepStatus[key] !== 'Running' && AppState.stepStatus[key] !== 'Done') {
+                AppState.stepStatus[key] = 'Running';
+                AppState.stepStartTimes[key] = new Date();
+                const $row = $(`#progressTable tbody tr[data-step="${key}"]`);
+                $row.find('td.status').text('Running').removeClass('status-pending status-done status-error').addClass('status-running');
+            }
+        },
+
+        markStepDone(key) {
+            const prev = AppState.stepStatus[key];
+            if (prev !== 'Done') {
+                AppState.stepStatus[key] = 'Done';
+                const start = AppState.stepStartTimes[key] || AppState.startTime || new Date();
+                const durMs = Math.max(0, new Date() - start);
+                const sec = (durMs / 1000).toFixed(1);
+                const $row = $(`#progressTable tbody tr[data-step="${key}"]`);
+                $row.find('td.status').text('Done').removeClass('status-pending status-running status-error').addClass('status-done');
+                $row.find('td.time').text(`${sec}s`);
+            }
+        },
+
+        markAnyRunningDone() {
+            Object.entries(AppState.stepStatus).forEach(([k, v]) => {
+                if (v === 'Running') this.markStepDone(k);
+            });
+        },
+
+        markAnyRunningError() {
+            Object.entries(AppState.stepStatus).forEach(([k, v]) => {
+                if (v === 'Running') {
+                    AppState.stepStatus[k] = 'Error';
+                    const $row = $(`#progressTable tbody tr[data-step="${k}"]`);
+                    $row.find('td.status').text('Error').removeClass('status-pending status-running status-done').addClass('status-error');
+                }
+            });
         },
 
         handleSSEError(err) {
@@ -875,6 +976,8 @@ $(document).ready(function() {
                 $("#progressTitle").show().text("Processing Complete").css('color', '');
                 $("#progressBarContainer").show();
                 $("#progressBar").css("width", "100%").removeClass('error');
+                this.markAnyRunningDone();
+                if (AppState.stepStatus['export'] !== 'Done') this.markStepDone('export');
             }
 
             $("button[type='submit']").prop("disabled", false);
@@ -914,6 +1017,9 @@ $(document).ready(function() {
                 });
                 $("#errorLogLink").show();
             }
+
+            // Mark any running step as error
+            this.markAnyRunningError();
         },
 
         cancelInference() {
@@ -957,6 +1063,49 @@ $(document).ready(function() {
         DescriptorManager.init();
         ConfigManager.init();
         InferenceManager.init();
+
+        // Log UI controls
+        if (document.getElementById('autoscrollToggle')) {
+            $('#autoscrollToggle').on('change', function() {
+                AppState.autoscroll = !!this.checked;
+            });
+        }
+        if (document.getElementById('copyLogsBtn')) {
+            $('#copyLogsBtn').on('click', function() {
+                const text = AppState.logs.join('\n');
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(() => Utils.showFlashMessage('Logs copied to clipboard.')).catch(() => alert('Copy failed'));
+                } else {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    try { document.execCommand('copy'); Utils.showFlashMessage('Logs copied to clipboard.'); } catch (e) { alert('Copy failed'); }
+                    document.body.removeChild(ta);
+                }
+            });
+        }
+        if (document.getElementById('downloadLogsBtn')) {
+            $('#downloadLogsBtn').on('click', function() {
+                const blob = new Blob([AppState.logs.join('\n')], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const ts = new Date().toISOString().replace(/[:.]/g, '-');
+                a.download = `beatheritage_logs_${ts}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+        }
+        if (document.getElementById('clearLogsBtn')) {
+            $('#clearLogsBtn').on('click', function() {
+                AppState.logs = [];
+                $('#logContent').text('');
+            });
+        }
 
         // Attach event handlers
         $("#model").on('change', () => UIManager.updateModelSettings());
