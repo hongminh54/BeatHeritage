@@ -94,7 +94,7 @@ def load_model(
         eval_mode: bool = True,
         pickle_module=None,
 ):
-    model_loader, tokenizer = load_model_loaders(
+    model_loader, tokenizer_loader = load_model_loaders(
         ckpt_path_str,
         t5_args,
         device,
@@ -102,8 +102,7 @@ def load_model(
         eval_mode,
         pickle_module,
     )
-    model = model_loader()
-    return model, tokenizer
+    return model_loader(), tokenizer_loader()
 
 
 def load_model_loaders(
@@ -153,7 +152,7 @@ def load_model_loaders(
         print(f"Model loaded: {ckpt_path_str} on device {device}")
         return model
 
-    return model_loader, tokenizer
+    return model_loader, tokenizer_loader
 
 
 def get_tokenizer(args: TrainConfig) -> Tokenizer:
