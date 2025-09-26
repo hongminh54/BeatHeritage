@@ -176,7 +176,7 @@ def start_inference():
             return f"'{escaped_value}'"
 
         # Set of keys known to be paths needing quoting for Hydra
-        path_keys = {"audio_path", "output_path", "beatmap_path"}
+        path_keys = {"audio_path", "output_path", "beatmap_path", "lora_path"}
 
         # Helper to add argument if value exists
         def add_arg(key, value):
@@ -202,6 +202,10 @@ def start_inference():
         # Beatmap path
         beatmap_path = request.form.get('beatmap_path')
         add_arg("beatmap_path", beatmap_path)
+
+        # Optional LoRA path
+        if 'lora_path' in request.form:
+            add_arg("lora_path", request.form.get('lora_path'))
 
         # Basic settings
         if 'gamemode' in request.form:

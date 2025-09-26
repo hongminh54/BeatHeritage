@@ -871,17 +871,3 @@ input[type="number"]:hover::-webkit-outer-spin-button {
 .clear-input-btn:active {
   transform: translateY(-50%) scale(0.95);
 }
-
-/* Update path-input-group to accommodate the new structure */
-.path-input-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.path-input-group label {
-  flex-shrink: 0;
-  margin-bottom: 0;
-  width: 100px;
-}
