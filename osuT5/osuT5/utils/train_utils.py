@@ -105,8 +105,9 @@ def maybe_eval(
         shared: Namespace,
 ):
     if (
-            shared.current_train_step > args.optim.total_steps
-            or shared.current_train_step % args.eval.every_steps == 0
+            (shared.current_train_step > args.optim.total_steps
+             or shared.current_train_step % args.eval.every_steps == 0)
+            and args.data.test_dataset_end > args.data.test_dataset_start
     ):
         model.eval()
 
