@@ -231,6 +231,8 @@ def get_args_from_beatmap(args: InferenceConfig, tokenizer: Tokenizer):
 
 def get_tags_dict(args: DictConfig | InferenceConfig):
     return dict(
+        model=args.model_path,
+        lora=args.lora_path,
         lookback=args.lookback,
         lookahead=args.lookahead,
         beatmap_id=args.beatmap_id,
