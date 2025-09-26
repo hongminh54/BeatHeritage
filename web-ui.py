@@ -233,6 +233,10 @@ def start_inference():
             cmd.append("add_to_beatmap=true")
         else:
             cmd.append("add_to_beatmap=false")
+        if 'overwrite_reference_beatmap' in request.form:
+            cmd.append("overwrite_reference_beatmap=true")
+        else:
+            cmd.append("overwrite_reference_beatmap=false")
         if 'hitsounded' in request.form:
             cmd.append("hitsounded=true")
         else:

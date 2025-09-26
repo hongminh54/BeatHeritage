@@ -56,7 +56,7 @@ $(document).ready(function() {
 
             // Reset checkboxes
             $('#hitsounded').prop('checked', true);
-            $('#export_osz, #add_to_beatmap, #super_timing').prop('checked', false);
+            $('#export_osz, #add_to_beatmap, #overwrite_reference_beatmap, #super_timing').prop('checked', false);
 
             // Clear descriptors and context options
             $('input[name="descriptors"], input[name="in_context_options"]')
@@ -104,7 +104,7 @@ $(document).ready(function() {
 
             // Handle beatmap path dependent fields
             const shouldShowBeatmapFields = beatmapPath !== '';
-            ['#in-context-options-box', '#add-to-beatmap-option'].forEach(selector => {
+            ['#in-context-options-box', '#add-to-beatmap-option', '#overwrite-reference-beatmap-option'].forEach(selector => {
                 const $element = $(selector);
                 if (shouldShowBeatmapFields && !$element.is(':visible')) {
                     $element.fadeIn(AppState.animationSpeed);
@@ -112,6 +112,9 @@ $(document).ready(function() {
                     $element.fadeOut(AppState.animationSpeed);
                     if (selector === '#add-to-beatmap-option') {
                         $('#add_to_beatmap').prop('checked', false);
+                    }
+                    if (selector === '#overwrite-reference-beatmap-option') {
+                        $('#overwrite_reference_beatmap').prop('checked', false);
                     }
                 }
             });

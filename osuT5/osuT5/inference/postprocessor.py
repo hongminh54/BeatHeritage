@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import dataclasses
 import os
-import uuid
 import zipfile
 from datetime import timedelta
 from string import Template
@@ -17,7 +16,6 @@ from .timing_points_change import TimingPointsChange, sort_timing_points
 from ..dataset.data_utils import get_groups, Group, get_median_mpb, BEAT_TYPES
 from ..tokenizer import Event, EventType
 
-OSU_FILE_EXTENSION = ".osu"
 OSU_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "template.osu")
 STEPS_PER_MILLISECOND = 0.1
 
@@ -472,33 +470,21 @@ class Postprocessor(object):
                 tp_change = TimingPointsChange(tp, mpb=True, meter=True, uninherited=True)
                 beatmap.timing_points = tp_change.add_change(beatmap.timing_points, False)
 
-        # Write the beatmap to the file
-        beatmap.write_path(beatmap_path)
+        return beatmap.pack()
 
-        return beatmap_path
-
-    def write_result(self, result: str, output_path: str) -> str:
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+    def write_result(self, result: str, output_path: str):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
         # Write .osu file to directory
-        osu_path = os.path.join(output_path, f"beatmap{str(uuid.uuid4().hex)}{OSU_FILE_EXTENSION}")
-        with open(osu_path, "w", encoding='utf-8-sig') as osu_file:
+        with open(output_path, "w", encoding='utf-8-sig') as osu_file:
             osu_file.write(result)
 
-        return osu_path
+    def export_osz(self, osu_path: str, audio_path: str, output_path: str):
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    def export_osz(self, osu_path: str, audio_path: str, output_path: str) -> str:
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-
-        osz_path = os.path.join(output_path, f"beatmap{str(uuid.uuid4().hex)}.osz")
-
-        with zipfile.ZipFile(osz_path, 'w') as zipf:
+        with zipfile.ZipFile(output_path, 'w') as zipf:
             zipf.write(osu_path, os.path.basename(osu_path))
             zipf.write(audio_path, os.path.basename(audio_path))
-
-        return osz_path
 
     @staticmethod
     def set_volume(time: timedelta, volume: int, timing: list[TimingPoint]) -> list[TimingPoint]:

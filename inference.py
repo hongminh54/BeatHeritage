@@ -1,5 +1,6 @@
 import excepthook  # noqa
 import os.path
+import uuid
 from functools import reduce
 from pathlib import Path
 import random
@@ -427,19 +428,26 @@ def generate(
         timing=timing,
     )
 
+    if args.add_to_beatmap:
+        result = postprocessor.add_to_beatmap(result, beatmap_path)
+        if verbose:
+            print(f"Merged generated content with reference beatmap")
+
     result_path = None
     osz_path = None
-    if args.add_to_beatmap:
-        result_path = postprocessor.add_to_beatmap(result, beatmap_path)
-        if verbose:
-            print(f"Added generated content to {result_path}")
-    elif output_path is not None and output_path != "":
-        result_path = postprocessor.write_result(result, output_path)
+
+    if output_path is not None and output_path != "":
+        if args.add_to_beatmap and args.overwrite_reference_beatmap:
+            result_path = beatmap_path
+        else:
+            result_path = os.path.join(output_path, f"beatmap{str(uuid.uuid4().hex)}.osu")
+        postprocessor.write_result(result, result_path)
         if verbose:
             print(f"Generated beatmap saved to {result_path}")
 
     if args.export_osz:
-        osz_path = postprocessor.export_osz(result_path, audio_path, output_path)
+        osz_path = os.path.join(output_path, f"beatmap{str(uuid.uuid4().hex)}.osz")
+        postprocessor.export_osz(result_path, audio_path, osz_path)
         if verbose:
             print(f"Generated .osz saved to {osz_path}")
 

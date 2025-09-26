@@ -161,7 +161,12 @@
 
                 <div class="option-item conditional-field" id="add-to-beatmap-option" style="display: none;">
                     <input type="checkbox" id="add_to_beatmap" name="add_to_beatmap" value="false" />
-                    <label for="add_to_beatmap" title="Whether to add generated content to the reference beatmap instead of making a new beatmap">Add to Beatmap</label>
+                    <label for="add_to_beatmap" title="Whether to merge the generated content with the reference beatmap">Add to Beatmap</label>
+                </div>
+
+                <div class="option-item conditional-field" id="overwrite-reference-beatmap-option" style="display: none;">
+                    <input type="checkbox" id="overwrite_reference_beatmap" name="overwrite_reference_beatmap" value="false" />
+                    <label for="overwrite_reference_beatmap" title="Whether to overwrite the reference beatmap file instead of creating a new file">Overwrite Reference Beatmap</label>
                 </div>
 
                 <div class="option-item conditional-field" id="option-item-hitsounded" data-hide-for-model="v30">
